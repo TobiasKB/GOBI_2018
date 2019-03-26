@@ -1,5 +1,5 @@
-import readsimulator.ReadSimulator;
-import utils.FileHandlerUtil;
+import exonskipping.Exon_Skipping_v2;
+import utils.CommandLine_Parser;
 
 /**
  * @author TKB
@@ -7,19 +7,10 @@ import utils.FileHandlerUtil;
 public class Runner {
 
 	public static void main(String[] args) {
+		CommandLine_Parser.parseParameters(args);
 
-		FileHandlerUtil.parseParameters(args);
-		/*
-		try {
-
-			PrintStream fileout = new PrintStream(FileHandlerUtil.outputFile);
-
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		System.setOut(fileout);*/
-//		Thread exonSkipping = new Thread(new Exon_Skipping_v2());
-		Thread t = new Thread(new ReadSimulator());
+		Thread t = new Thread(new Exon_Skipping_v2());
+//		Thread t = new Thread(new ReadSimulator());
 		t.start();
 		synchronized (t) {
 			try {

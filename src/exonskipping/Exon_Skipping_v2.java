@@ -1,10 +1,12 @@
 package exonskipping;
 
-import utils.FileHandlerUtil;
+import utils.CommandLine_Parser;
 import utils.GTF_FileParser;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +43,7 @@ public class Exon_Skipping_v2 implements Runnable {
 
         long speed_measure_start = System.currentTimeMillis();
         try {
-            BufferedReader br = new BufferedReader(new FileReader(FileHandlerUtil.inputFile));
+            BufferedReader br = new BufferedReader(new FileReader(CommandLine_Parser.inputFile_GTF));
             String line = br.readLine();
             String[] cleanLine;
 
@@ -145,7 +147,15 @@ public class Exon_Skipping_v2 implements Runnable {
         }
     }
 
-    public void print_Output() {
+    private void print_Output() {
+
+        try {
+            PrintStream fileout = new PrintStream(CommandLine_Parser.outputFile);
+            System.setOut(fileout);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
         String header = "id\t" + "symbol\t" + "chr\t" + "strand\t" + "nprots\t" + "ntrans\t" + "SV\t" + "WT\t" + "WT_prots\t" + "SV_prots\t"
                 + "min_skipped_exon\t" + "max_skipped_exon\t" + "min_skipped_bases\t" + "max_skipped_bases\t";
         System.out.println(header);

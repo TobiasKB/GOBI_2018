@@ -3,7 +3,7 @@ package utils;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
 
-public final class GTF_FileParser {
+public final class GTF_FileParser extends Thread {
     /*
      * File Parser for GTF Files
      * @author TKB

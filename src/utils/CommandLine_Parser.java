@@ -3,7 +3,7 @@ package utils;
 /**
  * @author TKB
  */
-public final class FileHandlerUtil {
+public final class CommandLine_Parser {
 
     public static String inputFile_GTF;
     public static String inputFile_fasta;
@@ -19,8 +19,8 @@ public final class FileHandlerUtil {
     /**
      *
      */
-    private FileHandlerUtil() {
-        System.out.println("FileHandlerUtil cannot be invoked.");
+    private CommandLine_Parser() {
+        System.out.println("CommandLine_Parser cannot be invoked.");
     }
 
 
@@ -30,7 +30,7 @@ public final class FileHandlerUtil {
             switch (args[i]) {
                 case "-gtf":
                     inputFile_GTF = args[i + 1];
-//				System.out.println(inputFile);
+                    System.out.println(inputFile_GTF);
                     i++;
                     break;
                 case "-o":
@@ -85,8 +85,14 @@ public final class FileHandlerUtil {
 
 
 }
-//-o "C:\Users\TKB\Downloads\Gobi_First_Assignment_Test\testoutput.txt" -gtf "C:\Users\TKB\Downloads\Gobi_First_Assignment_Test\Homo_sapiens.GRCh38.86.gtf"
-
-
-//inputFile = "C:\\Users\\TKB\\Dropbox\\Studium\\Bioinformatik\\5.Semester\\Gobi\\ENSG00000131018_Unmod.txt";//
-//inputFile="C:\\Users\\TKB\\Downloads\\Gobi_First_Assignment_Test\\Homo_sapiens.GRCh38.86.gtf";
+/*
+Usage example:
+This applies only when the jar file is within the folder of the testfiles!
+-length 75 -frlength 20 -SD 80 \
+        -mutationrate 1.0 \
+        -gtf Homo_sapiens.GRCh37.75.gtf \
+        -fasta Homo_sapiens.GRCh37.75.dna.toplevel.fa \
+        -fidx Homo_sapiens.GRCh37.75.dna.toplevel.fa.fai \
+        -readcounts simul.readcons \
+        -od output
+*/
