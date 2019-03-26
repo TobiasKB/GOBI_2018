@@ -49,7 +49,7 @@ public class Exon_Skipping_v2 implements Runnable {
 
             while (line != null) {
 
-                cleanLine = GTF_FileParser.parseLine(line);
+                cleanLine = GTF_FileParser.parseLine(line, null, null);
 
                 if (cleanLine != null) {
 /**                    genes.put("sd",new Gen());

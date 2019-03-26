@@ -1,5 +1,7 @@
 package utils;
 
+import java.io.File;
+
 /**
  * @author TKB
  */
@@ -10,7 +12,7 @@ public final class CommandLine_Parser {
     public static String inputFile_fidx;
     public static String inputFile_readcounts;
     public static String outputFile;
-    public static String outputDirectory;
+    public static File outputDirectory;
     public static int readlength;
     public static int frlength;
     public static int standardDeviation;
@@ -30,7 +32,7 @@ public final class CommandLine_Parser {
             switch (args[i]) {
                 case "-gtf":
                     inputFile_GTF = args[i + 1];
-                    System.out.println(inputFile_GTF);
+//                    System.out.println(inputFile_GTF);
                     i++;
                     break;
                 case "-o":
@@ -38,7 +40,7 @@ public final class CommandLine_Parser {
                     i++;
                     break;
                 case "-od":
-                    outputDirectory = args[i + 1];
+                    outputDirectory = new File(args[i + 1]);
                     i++;
                     break;
                 case "-fasta":
@@ -51,6 +53,7 @@ public final class CommandLine_Parser {
                     break;
                 case "-readcounts":
                     inputFile_readcounts = args[i + 1];
+//                    System.out.println(inputFile_readcounts);
                     i++;
                     break;
                 case "-length":
@@ -76,7 +79,7 @@ public final class CommandLine_Parser {
                 default:
                     System.out.println(
 //                            "Correct usage: -o \"output file path\" -g \"input file path\"");
-                            "Correct usage: -o \"output file path\" -g \"input file path\" -od \"output directory path\" -gtf \"input file path to GTF File\" -fasta \"input file path to fasta\" " +
+                            args[i] + "Correct usage: -o \"output file path\" -g \"input file path\" -od \"output directory path\" -gtf \"input file path to GTF File\" -fasta \"input file path to fasta\" " +
                                     "-mutationrate \"mutationrate\" -fidx \"input file path to fasta annotation file\" -readcounts \"input file path to readcounts\" -frlength \"fragment length\" -SD \"Standard Derivation\" -length \"Readlengths\"  ");
                     break check;
             }

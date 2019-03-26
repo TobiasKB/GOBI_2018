@@ -1,4 +1,4 @@
-import exonskipping.Exon_Skipping_v2;
+import readsimulator.ReadSimulator;
 import utils.CommandLine_Parser;
 
 /**
@@ -9,8 +9,8 @@ public class Runner {
 	public static void main(String[] args) {
 		CommandLine_Parser.parseParameters(args);
 
-		Thread t = new Thread(new Exon_Skipping_v2());
-//		Thread t = new Thread(new ReadSimulator());
+//		Thread t = new Thread(new Exon_Skipping_v2());
+		Thread t = new Thread(new ReadSimulator());
 		t.start();
 		synchronized (t) {
 			try {
