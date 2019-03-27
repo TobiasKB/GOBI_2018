@@ -9,10 +9,17 @@ import utils.TesException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.HashMap;
+import java.util.Map;
 
 public class ReadSimulator implements Runnable {
 
+	/*
+	 * readcounts HashMap<gene_id < transcript_id , count_for_transcript>
+	 * fasta_annotation HashMap < chr, [entry_length, entry_start, line_length, line_length_nlChar]>
+	 * target_genes < gene_id, Gen >
+	 * */
 	private HashMap<String, HashMap<String, Integer>> readcounts;
 	private HashMap<String, long[]> fasta_annotation;
 	private HashMap<String, Gen> target_genes;
@@ -32,6 +39,8 @@ public class ReadSimulator implements Runnable {
 
 		printHeaders();
 
+		getSequences();
+
 		calculateFragments();
 
 
@@ -40,7 +49,6 @@ public class ReadSimulator implements Runnable {
 	private void readFiles() {
 		/*
 		 * Already done by FileReader: get Paths and inputParameters
-		 * TODO: Read GTF File, but only lines with "CDS" and ID's from Readcounter.simulation;
 		 * Ein Thread liest das IndexFile , einer den Rest//
 		 *
 		 * */
@@ -105,14 +113,14 @@ public class ReadSimulator implements Runnable {
 			String[] cleanline;
 
 			while (line != null) {
-
 				cleanline = GTF_FileParser.parseLine(line, null, null);
 				if (cleanline == null) {
+					line = br.readLine();
 					continue;
 				}
 				for (String gene_id : readcounts.keySet()) {
 
-					if (cleanline[0].equals(gene_id)) {
+					if (cleanline[5].equals(gene_id)) {
 						if (!target_genes.containsKey(cleanline[0])) {
 
 							target_genes.put(cleanline[5], new Gen(cleanline[5], cleanline[4], cleanline[0], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[3], cleanline[6]));
@@ -124,9 +132,7 @@ public class ReadSimulator implements Runnable {
 
 						target_genes.get(cleanline[5]).add_Region(cleanline[7], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]));
 						target_genes.get(cleanline[5]).add_nprots();
-
 					}
-
 				}
 
 				line = br.readLine();
@@ -139,13 +145,64 @@ public class ReadSimulator implements Runnable {
 		}
 	}
 
-	private void printHeaders() {
+	private void getSequences() {
+		/*
+		 * TODO: Jump into FASTA file and grab Sequences of relevance /Safe Sequence to Transcript
+		 * Going through all Transcript IDs for all Genes, with the gene giving information about the position in the genome (chr)
+		 * For each perform a lookup in the fidx file (saved in "fasta_annotation" to gather the position more quickly.
+		 *
+		 * For final access, a random access file is used, using the java library
+		 * */
+		try {
+
+
+			RandomAccessFile fasta_file = new RandomAccessFile(CommandLine_Parser.inputFile_fasta, "r");
+			for (Map.Entry<String, Gen> gen : target_genes.entrySet()) {
+
+
+				gen.getValue().get_Transcripts().forEach((transcript_id, t) -> {
+					try {
+
+
+						fasta_file.seek((fasta_annotation.get(gen.getValue().getchr())[1] + t.getStart()));
+						System.out.println(fasta_annotation.get(gen.getValue().getchr())[1] + t.getStart());
+						;
+
+
+						for (int i = 0; i < t.getEnd() - t.getStart(); i++) {
+							/*
+							TODO: Delete \n ? Save to transcript
+							 * */
+							System.out.print(fasta_file.readUTF().equals("\n"));
+
+//							System.out.print(fasta_file.readChar()+"");
+						}
+
+					} catch (IOException e) {
+						throw new TesException("Error Seeking correnct Line in FastaFile", e);
+					}
+
+				});
+			}
+
+		} catch (IOException e) {
+			throw new TesException("Failed to read Fasta File @RandomFileAccess", e);
+		}
 
 	}
 
 	private void calculateFragments() {
 
+
 	}
+
+	private void printHeaders() {
+
+//		TODO: Print Headers to outputfiles; generate outputfiles. Remember to concat, not overwrite them later on!
+
+
+	}
+
 
 }
 

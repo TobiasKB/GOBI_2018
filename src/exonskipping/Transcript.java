@@ -22,10 +22,10 @@ public class Transcript {
     private HashSet<String> proteins;
     private int start;
     private int end;
-    private String gene_holder;
+    private String sequence;
 
 
-    public Transcript(String trans_id, String strand, String proteinID, int start, int end, String gene_holder) {
+    public Transcript(String trans_id, String strand, String proteinID, int start, int end, String source) {
         this.trans_id = trans_id;
         this.strand = strand;
         exons = new TreeSet<Exon>();
@@ -38,7 +38,11 @@ public class Transcript {
         this.sv_to_skippedExons = new HashMap<>();
         this.sv_to_wt_prots = new HashMap<>();
         this.proteins.add(proteinID);
-        this.gene_holder = gene_holder;
+        this.source = source;
+    }
+
+    public void addSequence() {
+        this.sequence = sequence;
     }
 
     public HashSet<String> get_proteins() {

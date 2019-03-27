@@ -88,6 +88,10 @@ public class Gen {
         return this.tmap;
     }
 
+	public Transcript get_Transcript(String transcript_id) {
+		return tmap.get(transcript_id);
+	}
+
     public int getStart() {
         return start;
     }
@@ -177,7 +181,6 @@ public class Gen {
 //        });
         return null;
     }
-//    TODO: Some shit!! D:
 
 
     public HashMap<String, HashSet<String>> getSV_prots() {
