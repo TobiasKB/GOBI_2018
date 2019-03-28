@@ -32,3 +32,4 @@ public class Runner {
 
 }
 //"/home/tobias/Documents/Unterlagen Universität/GOBI_2018/Assignment_02/ReadSimulator/Test_Output/output"
+// 	-length 75 -frlength 20 -SD 80 -mutationrate 1.0 -gtf /home/k/kraftblank/Documents/5.Semester/GOBI_2018_Sources/ReadSimulator/Homo_sapiens.GRCh37.75.gtf -fasta /home/k/kraftblank/Documents/5.Semester/GOBI_2018_Sources/ReadSimulator/Homo_sapiens.GRCh37.75.dna.toplevel.fa -fidx /home/k/kraftblank/Documents/5.Semester/GOBI_2018_Sources/ReadSimulator/Homo_sapiens.GRCh37.75.dna.toplevel.fa.fai -readcounts /home/k/kraftblank/Documents/5.Semester/GOBI_2018_Sources/ReadSimulator/simul.readcons -od /home/k/kraftblank/Documents/5.Semester/GOBI_2018_Sources/output.testfile

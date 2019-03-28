@@ -36,7 +36,6 @@ public class RegionVector implements Comparable<RegionVector> {
 //        this.length = 0;
         this.size = 0;
         try {
-
             for (Object r : (TreeSet) regionSet) {
                 if (((Region) r).start >= newstart && ((Region) r).end < newstop) {
                     regions.add((Region) r);

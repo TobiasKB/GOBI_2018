@@ -7,9 +7,12 @@ import utils.GTF_FileParser;
 import utils.TesException;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -156,32 +159,33 @@ public class ReadSimulator implements Runnable {
 		try {
 
 
-			RandomAccessFile fasta_file = new RandomAccessFile(CommandLine_Parser.inputFile_fasta, "r");
+			RandomAccessFile raf = new RandomAccessFile(CommandLine_Parser.inputFile_fasta, "r");
 			for (Map.Entry<String, Gen> gen : target_genes.entrySet()) {
 
-
 				gen.getValue().get_Transcripts().forEach((transcript_id, t) -> {
+					char[] temp_sequence= new char[t.getEnd()-t.getStart()];
 					try {
 
-
-						fasta_file.seek((fasta_annotation.get(gen.getValue().getchr())[1] + t.getStart()));
-						System.out.println(fasta_annotation.get(gen.getValue().getchr())[1] + t.getStart());
-						;
-
-
-						for (int i = 0; i < t.getEnd() - t.getStart(); i++) {
+						raf.seek((fasta_annotation.get(gen.getValue().getchr())[1] + t.getStart()));
+							byte[] bytey = new byte[(t.getEnd()-t.getStart())];
 							/*
 							TODO: Delete \n ? Save to transcript
 							 * */
-							System.out.print(fasta_file.readUTF().equals("\n"));
-
+							
+							raf.readFully(bytey,0,t.getEnd()-t.getStart());
+//							temp_sequence[Math.toIntExact(i)]=fasta_file.readChar();
+//							System.out.println(new String(fasta_file.readChar()+""));
+							
 //							System.out.print(fasta_file.readChar()+"");
-						}
+//						}
 
+						String temp = new String (bytey, StandardCharsets.UTF_8);
+						System.out.print(temp);
+						
 					} catch (IOException e) {
 						throw new TesException("Error Seeking correnct Line in FastaFile", e);
 					}
-
+						
 				});
 			}
 

@@ -32,46 +32,54 @@ public final class CommandLine_Parser {
             switch (args[i]) {
                 case "-gtf":
                     inputFile_GTF = args[i + 1];
-//                    System.out.println(inputFile_GTF);
+                    System.out.println(inputFile_GTF);
                     i++;
                     break;
                 case "-o":
                     outputFile = args[i + 1];
+                    System.out.println(outputFile);
                     i++;
                     break;
                 case "-od":
                     outputDirectory = new File(args[i + 1]);
+                    System.out.println(outputDirectory);
                     i++;
                     break;
                 case "-fasta":
                     inputFile_fasta = args[i + 1];
+                    System.out.println(inputFile_fasta);
                     i++;
                     break;
                 case "-fidx":
                     inputFile_fidx = args[i + 1];
+                    System.out.println(inputFile_fidx);
                     i++;
                     break;
                 case "-readcounts":
                     inputFile_readcounts = args[i + 1];
-//                    System.out.println(inputFile_readcounts);
+                    System.out.println(inputFile_readcounts);
                     i++;
                     break;
                 case "-length":
                     readlength = Integer.parseInt(args[i + 1]);
                     i++;
+                    System.out.println(readlength);
                     break;
 
                 case "-mutationrate":
                     mutationrate = Double.parseDouble(args[i + 1]);
                     i++;
+                    System.out.println(mutationrate);
                     break;
                 case "-frlength":
                     frlength = Integer.parseInt(args[i + 1]);
                     i++;
+                    System.out.println(frlength);
                     break;
                 case "-SD":
                     standardDeviation = Integer.parseInt(args[i + 1]);
                     i++;
+                    System.out.println(standardDeviation);
                     break;
                 case "--998esf92mmow350sefmi048ssmlg4i":
                     System.out.println("You cracked it! ");
@@ -84,6 +92,7 @@ public final class CommandLine_Parser {
                     break check;
             }
         }
+    				outputFile   = 	outputDirectory+outputFile; 
     }
 
 
