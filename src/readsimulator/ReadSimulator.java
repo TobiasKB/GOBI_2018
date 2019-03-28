@@ -7,12 +7,10 @@ import utils.GTF_FileParser;
 import utils.TesException;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -117,27 +115,28 @@ public class ReadSimulator implements Runnable {
 
 			while (line != null) {
 				cleanline = GTF_FileParser.parseLine(line, null, null);
-				if (cleanline == null) {
-					line = br.readLine();
-					continue;
-				}
-				for (String gene_id : readcounts.keySet()) {
+				if (cleanline != null) {
 
-					if (cleanline[5].equals(gene_id)) {
-						if (!target_genes.containsKey(cleanline[0])) {
+					for (String gene_id : readcounts.keySet()) {
 
-							target_genes.put(cleanline[5], new Gen(cleanline[5], cleanline[4], cleanline[0], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[3], cleanline[6]));
+						for (String transcript_id : readcounts.get(gene_id).keySet()) {
 
+							if (cleanline[5].equals(gene_id) && cleanline[7].equals(transcript_id)) {
+
+								if (!target_genes.containsKey(cleanline[5])) {
+
+									target_genes.put(cleanline[5], new Gen(cleanline[5], cleanline[4], cleanline[0], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[3], cleanline[6]));
+
+								}
+								if (!target_genes.get(cleanline[5]).get_Transcripts().containsKey(cleanline[7]))
+									target_genes.get(cleanline[5]).add_Transcript(new Transcript(cleanline[7], cleanline[3], cleanline[6], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[5]));
+
+								target_genes.get(cleanline[5]).add_Region(cleanline[7], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]));
+								target_genes.get(cleanline[5]).add_nprots();
+							}
 						}
-						if (!target_genes.get(cleanline[5]).get_Transcripts().containsKey(cleanline[7]))
-							target_genes.get(cleanline[5]).add_Transcript(new Transcript(cleanline[7], cleanline[3], cleanline[6], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[5]));
-
-
-						target_genes.get(cleanline[5]).add_Region(cleanline[7], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]));
-						target_genes.get(cleanline[5]).add_nprots();
 					}
 				}
-
 				line = br.readLine();
 			}
 
@@ -160,32 +159,42 @@ public class ReadSimulator implements Runnable {
 
 
 			RandomAccessFile raf = new RandomAccessFile(CommandLine_Parser.inputFile_fasta, "r");
+
 			for (Map.Entry<String, Gen> gen : target_genes.entrySet()) {
 
 				gen.getValue().get_Transcripts().forEach((transcript_id, t) -> {
-					char[] temp_sequence= new char[t.getEnd()-t.getStart()];
-					try {
+					StringBuilder stringBuilder = new StringBuilder();
+/*
+					System.out.println(t.getTrans_id());
+					System.out.println(t.getStart());
+					System.out.println(t.getEnd());*/
+					char[] temp_sequence = new char[t.getEnd() - t.getStart()];
 
-						raf.seek((fasta_annotation.get(gen.getValue().getchr())[1] + t.getStart()));
-							byte[] bytey = new byte[(t.getEnd()-t.getStart())];
-							/*
-							TODO: Delete \n ? Save to transcript
-							 * */
-							
-							raf.readFully(bytey,0,t.getEnd()-t.getStart());
-//							temp_sequence[Math.toIntExact(i)]=fasta_file.readChar();
-//							System.out.println(new String(fasta_file.readChar()+""));
-							
-//							System.out.print(fasta_file.readChar()+"");
-//						}
 
-						String temp = new String (bytey, StandardCharsets.UTF_8);
-						System.out.print(temp);
-						
-					} catch (IOException e) {
-						throw new TesException("Error Seeking correnct Line in FastaFile", e);
-					}
-						
+					/*
+					 *TODO: For Schleife ueber alle Exons, nicht von Transcript Start bis Ende und zusammencutten.
+					 *Noch nicht ganz korrekt, leichte abweichung, nicht ganz so viele gefunden wie eigentlich benoetigt. Ausserdem falscher Index, somewhere, weil immer noch kein Match .
+					 * */
+
+					t.getExons().forEach(exon -> {
+						try {
+							raf.seek((fasta_annotation.get(gen.getValue().getchr())[1] + exon.getStart()));
+							byte[] bytey = new byte[(exon.getEnd() - exon.getStart())];
+
+							raf.readFully(bytey, 0, exon.getEnd() - exon.getStart());
+
+							String temp = new String(bytey, StandardCharsets.UTF_8)/*.replaceAll("\n", "")*/;
+
+							stringBuilder.append(temp);
+
+
+						} catch (IOException e) {
+							throw new TesException("Error Seeking correnct Line in FastaFile", e);
+						}
+					});
+
+					System.out.println(stringBuilder.toString());
+					System.out.println();
 				});
 			}
 

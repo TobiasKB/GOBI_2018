@@ -22,6 +22,10 @@ public class Region implements Comparable<Region> {
         return end;
     }
 
+    public int getStart() {
+        return start;
+    }
+
     public String toString() {
         return start + ":" + end;
     }

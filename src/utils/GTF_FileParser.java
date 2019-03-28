@@ -8,7 +8,7 @@ public final class GTF_FileParser extends Thread {
 	 * File Parser for GTF Files
 	 * @author TKB
 	 **/
-	private static String feature = "CDS";
+	private static String feature = "exon";
 	private static TreeSet<Integer> tabs = new TreeSet<Integer>();
 	private static String cdscheck, chr, strand, gene_id, protein_id, transcript_id, gene_name, start, end = "";
 	private static StringBuilder cleanliner = new StringBuilder();
@@ -20,7 +20,14 @@ public final class GTF_FileParser extends Thread {
 
 	private GTF_FileParser() {
 	}
-
+//TODO: Rewrite method for "Exon" vs "CDS"
+	/*
+	 * Methode kopieren, eine fuer readSimulator, eine fuer ExonSkipping.
+	 * Einmal mit  CDS , einmal mit Exon
+	 * Exon: Hinzufuegen von Eigenschaften "exon_number" und "exon_id"
+	 * ReadSimulator parseLine: Umstellen, Exon haben keine Protein_id --> im Transcript umstellen
+	 *
+	 * */
 
 	public static String[] parseLine(String inline, String filteroption1, String filteroption2) {
 		tabs.clear();
@@ -63,7 +70,6 @@ public final class GTF_FileParser extends Thread {
 			return null;
 		}
 
-
 		chr = inline.substring(0, HashUtil.get_nthElement_Set(tabs, 1));
 		start = inline.substring(HashUtil.get_nthElement_Set(tabs, 3) + 1, HashUtil.get_nthElement_Set(tabs, 4));
 		end = inline.substring(HashUtil.get_nthElement_Set(tabs, 4) + 1, HashUtil.get_nthElement_Set(tabs, 5));
@@ -93,6 +99,12 @@ public final class GTF_FileParser extends Thread {
 					continue;
 			}
 
+		}
+		/*
+		 * Applies only for ReadSimulator TODO: REmove
+		 * */
+		if (protein_id.isEmpty()) {
+			protein_id = "?";
 		}
 //        System.out.println();
 		try {

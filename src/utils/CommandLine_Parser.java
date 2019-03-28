@@ -107,4 +107,12 @@ This applies only when the jar file is within the folder of the testfiles!
         -fidx Homo_sapiens.GRCh37.75.dna.toplevel.fa.fai \
         -readcounts simul.readcons \
         -od output
+
+
+        -length 75 -frlength 20 -SD 80          -mutationrate 1.0
+  -gtf "/home/tobias/Documents/Unterlagen Universität/GOBI_2018/Assignment_02/ReadSimulator/Homo_sapiens.GRCh37.75.gtf"          -fasta "/home/tobias/Documents/Unterlagen Universität/GOBI_2018/Assignment_02/ReadSimulator/Homo_sapiens.GRCh37.75.dna.toplevel.fa"
+  -fidx "/home/tobias/Documents/Unterlagen Universität/GOBI_2018/Assignment_02/ReadSimulator/Homo_sapiens.GRCh37.75.dna.toplevel.fa.fai"
+  -readcounts "/home/tobias/Documents/Unterlagen Universität/GOBI_2018/Assignment_02/ReadSimulator/simul.readcons"
+  -o "/ReadSimulator.testoutput"
+  -od "/home/tobias/Documents/Unterlagen Universität/GOBI_2018/Assignment_02/Test_Output"
 */
