@@ -181,29 +181,55 @@ public class ReadSimulator implements Runnable {
 						System.out.println("Exon:" + exon);
 						try {
 
-							raf.seek((fasta_annotation.get(gen.getValue().getchr())[1] + (exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2])) + exon.getStart());
+//							raf.seek((fasta_annotation.get(gen.getValue().getchr())[1] + (exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2])) + exon.getStart());
 
 
 							long lines_in_entry = (exon.getStart() - 1) / fasta_annotation.get(gen.getValue().getchr())[2];
 							long last_line_length = exon.getStart() - (lines_in_entry * fasta_annotation.get(gen.getValue().getchr())[2]);
 							long offset = lines_in_entry * fasta_annotation.get(gen.getValue().getchr())[3] + last_line_length;
+							System.out.println(fasta_annotation.get(gen.getValue().getchr())[1] + offset - 1);
+							raf.seek(fasta_annotation.get(gen.getValue().getchr())[1] + offset - 1);
 
-//							raf.seek(fasta_annotation.get(gen.getValue().getchr())[1] + offset);
+							/*
+							 * TODO: Runden ist nicht korrekt, 3,6 sollte zu 4 werden!
+							 *
+							 * */
 
-							long lines_in = ((exon.getEnd() - exon.getStart()) - 1) / fasta_annotation.get(gen.getValue().getchr())[2];
-							long last_line = (exon.getEnd() - exon.getStart()) - (lines_in * fasta_annotation.get(gen.getValue().getchr())[2]);
-							long off = lines_in * fasta_annotation.get(gen.getValue().getchr())[3] + last_line;
+							long lines_in_1 = (int) Math.floor(exon.getEnd() / fasta_annotation.get(gen.getValue().getchr())[2]);
+							long lines_in_2 = (int) Math.floor(exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2]);
 
-							int length = Math.toIntExact(off);
+							long lines_for_real = lines_in_1 - lines_in_2;
+
+//							long lines_in =(int) Math.ceil( ((exon.getEnd() - exon.getStart()) - 1) / fasta_annotation.get(gen.getValue().getchr())[2]);
+							long last_line = (exon.getEnd() - exon.getStart()) - (lines_for_real * fasta_annotation.get(gen.getValue().getchr())[2]);
+							long off = lines_for_real * fasta_annotation.get(gen.getValue().getchr())[3] + last_line;
 
 
-//							int length = Math.toIntExact(fasta_annotation.get((((exon.getEnd() - exon.getStart() - 1) / fasta_annotation.get(gen.getValue().getchr())[2]) * fasta_annotation.get(gen.getValue().getchr())[3]) + ((exon.getEnd() - exon.getStart()) - ((exon.getEnd() - exon.getStart() - 1) / fasta_annotation.get(gen.getValue().getchr())[2]))));
-//							int length=Math.toIntExact((exon.getEnd()+ ((exon.getEnd()-exon.getStart())/fasta_annotation.get(gen.getValue().getchr())[2]) * fasta_annotation.get(gen.getValue().getchr())[3]- exon.getStart()));
+
+
+			/*				long off_2=0;
+if (exon.getEnd()%60==0) {
+	off_2 = (int) (Math.floor(exon.getEnd() / fasta_annotation.get(gen.getValue().getchr())[2]) * fasta_annotation.get(gen.getValue().getchr())[3]) - (int) (Math.floor(exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2]) * fasta_annotation.get(gen.getValue().getchr())[3])+1;
+}else{
+	off_2 = (int) (Math.floor(exon.getEnd() / fasta_annotation.get(gen.getValue().getchr())[2]) * fasta_annotation.get(gen.getValue().getchr())[3]) - (int) (Math.floor(exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2]) * fasta_annotation.get(gen.getValue().getchr())[3]);
+
+}
+*/
+							System.out.println("lines in " + lines_for_real);
+							System.out.println("lastL:ine " + last_line);
+							System.out.println("off " + off);
+							int length = Math.toIntExact(off) + 1;
+//							int length = Math.toIntExact(exon.getEnd()-exon.getStart()+1);
+
+							System.out.println(length);
+
 							byte[] bytey = new byte[length];
+
 
 							raf.readFully(bytey, 0, length);
 
 							String temp = new String(bytey, StandardCharsets.UTF_8).replaceAll("\n", "");
+//							String temp = new String(bytey, StandardCharsets.UTF_8);
 							System.out.println(temp.toString());
 							stringBuilder.append(temp);
 
