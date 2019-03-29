@@ -18,7 +18,7 @@ public class ReadSimulator implements Runnable {
 
 	/*
 	 * readcounts HashMap<gene_id < transcript_id , count_for_transcript>
-	 * fasta_annotation HashMap < chr, [entry_length, entry_start, line_length, line_length_nlChar]>
+	 * fasta_annotation HashMap < chr, [entry_length(0), entry_start(1), line_length(2), line_length_nlChar(3)]>
 	 * target_genes < gene_id, Gen >
 	 * */
 	private HashMap<String, HashMap<String, Integer>> readcounts;
@@ -162,13 +162,14 @@ public class ReadSimulator implements Runnable {
 
 			for (Map.Entry<String, Gen> gen : target_genes.entrySet()) {
 
+				System.out.println((gen.getValue().getStart()));
+				System.out.println((gen.getValue().getEnd()));
+
 				gen.getValue().get_Transcripts().forEach((transcript_id, t) -> {
 					StringBuilder stringBuilder = new StringBuilder();
-/*
 					System.out.println(t.getTrans_id());
 					System.out.println(t.getStart());
-					System.out.println(t.getEnd());*/
-					char[] temp_sequence = new char[t.getEnd() - t.getStart()];
+					System.out.println(t.getEnd());
 
 
 					/*
@@ -177,14 +178,33 @@ public class ReadSimulator implements Runnable {
 					 * */
 
 					t.getExons().forEach(exon -> {
+						System.out.println("Exon:" + exon);
 						try {
-							raf.seek((fasta_annotation.get(gen.getValue().getchr())[1] + exon.getStart()));
-							byte[] bytey = new byte[(exon.getEnd() - exon.getStart())];
 
-							raf.readFully(bytey, 0, exon.getEnd() - exon.getStart());
+							raf.seek((fasta_annotation.get(gen.getValue().getchr())[1] + (exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2])) + exon.getStart());
 
-							String temp = new String(bytey, StandardCharsets.UTF_8)/*.replaceAll("\n", "")*/;
 
+							long lines_in_entry = (exon.getStart() - 1) / fasta_annotation.get(gen.getValue().getchr())[2];
+							long last_line_length = exon.getStart() - (lines_in_entry * fasta_annotation.get(gen.getValue().getchr())[2]);
+							long offset = lines_in_entry * fasta_annotation.get(gen.getValue().getchr())[3] + last_line_length;
+
+//							raf.seek(fasta_annotation.get(gen.getValue().getchr())[1] + offset);
+
+							long lines_in = ((exon.getEnd() - exon.getStart()) - 1) / fasta_annotation.get(gen.getValue().getchr())[2];
+							long last_line = (exon.getEnd() - exon.getStart()) - (lines_in * fasta_annotation.get(gen.getValue().getchr())[2]);
+							long off = lines_in * fasta_annotation.get(gen.getValue().getchr())[3] + last_line;
+
+							int length = Math.toIntExact(off);
+
+
+//							int length = Math.toIntExact(fasta_annotation.get((((exon.getEnd() - exon.getStart() - 1) / fasta_annotation.get(gen.getValue().getchr())[2]) * fasta_annotation.get(gen.getValue().getchr())[3]) + ((exon.getEnd() - exon.getStart()) - ((exon.getEnd() - exon.getStart() - 1) / fasta_annotation.get(gen.getValue().getchr())[2]))));
+//							int length=Math.toIntExact((exon.getEnd()+ ((exon.getEnd()-exon.getStart())/fasta_annotation.get(gen.getValue().getchr())[2]) * fasta_annotation.get(gen.getValue().getchr())[3]- exon.getStart()));
+							byte[] bytey = new byte[length];
+
+							raf.readFully(bytey, 0, length);
+
+							String temp = new String(bytey, StandardCharsets.UTF_8).replaceAll("\n", "");
+							System.out.println(temp.toString());
 							stringBuilder.append(temp);
 
 
@@ -192,7 +212,7 @@ public class ReadSimulator implements Runnable {
 							throw new TesException("Error Seeking correnct Line in FastaFile", e);
 						}
 					});
-
+					System.out.println();
 					System.out.println(stringBuilder.toString());
 					System.out.println();
 				});
