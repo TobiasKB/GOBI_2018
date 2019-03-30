@@ -149,11 +149,9 @@ public class ReadSimulator implements Runnable {
 
 	private void getSequences() {
 		/*
-		 * TODO: Jump into FASTA file and grab Sequences of relevance /Safe Sequence to Transcript
 		 * Going through all Transcript IDs for all Genes, with the gene giving information about the position in the genome (chr)
 		 * For each perform a lookup in the fidx file (saved in "fasta_annotation" to gather the position more quickly.
 		 *
-		 * For final access, a random access file is used, using the java library
 		 * */
 		try {
 
@@ -162,23 +160,18 @@ public class ReadSimulator implements Runnable {
 
 			for (Map.Entry<String, Gen> gen : target_genes.entrySet()) {
 
+/*
 				System.out.println((gen.getValue().getStart()));
 				System.out.println((gen.getValue().getEnd()));
+*/
 
 				gen.getValue().get_Transcripts().forEach((transcript_id, t) -> {
 					StringBuilder stringBuilder = new StringBuilder();
-					System.out.println(t.getTrans_id());
-					System.out.println(t.getStart());
-					System.out.println(t.getEnd());
-
-
-					/*
-					 *TODO: For Schleife ueber alle Exons, nicht von Transcript Start bis Ende und zusammencutten.
-					 *Noch nicht ganz korrekt, leichte abweichung, nicht ganz so viele gefunden wie eigentlich benoetigt. Ausserdem falscher Index, somewhere, weil immer noch kein Match .
-					 * */
-
+/*
+Loop ueber alle Exons eines Transkripts
+*/
 					t.getExons().forEach(exon -> {
-						System.out.println("Exon:" + exon);
+
 						try {
 
 //							raf.seek((fasta_annotation.get(gen.getValue().getchr())[1] + (exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2])) + exon.getStart());
@@ -187,50 +180,37 @@ public class ReadSimulator implements Runnable {
 							long lines_in_entry = (exon.getStart() - 1) / fasta_annotation.get(gen.getValue().getchr())[2];
 							long last_line_length = exon.getStart() - (lines_in_entry * fasta_annotation.get(gen.getValue().getchr())[2]);
 							long offset = lines_in_entry * fasta_annotation.get(gen.getValue().getchr())[3] + last_line_length;
-							System.out.println(fasta_annotation.get(gen.getValue().getchr())[1] + offset - 1);
+
 							raf.seek(fasta_annotation.get(gen.getValue().getchr())[1] + offset - 1);
 
-							/*
-							 * TODO: Runden ist nicht korrekt, 3,6 sollte zu 4 werden!
-							 *
-							 * */
 
 							long lines_in_1 = (int) Math.floor(exon.getEnd() / fasta_annotation.get(gen.getValue().getchr())[2]);
 							long lines_in_2 = (int) Math.floor(exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2]);
 
 							long lines_for_real = lines_in_1 - lines_in_2;
 
-//							long lines_in =(int) Math.ceil( ((exon.getEnd() - exon.getStart()) - 1) / fasta_annotation.get(gen.getValue().getchr())[2]);
 							long last_line = (exon.getEnd() - exon.getStart()) - (lines_for_real * fasta_annotation.get(gen.getValue().getchr())[2]);
 							long off = lines_for_real * fasta_annotation.get(gen.getValue().getchr())[3] + last_line;
 
 
-
-
-			/*				long off_2=0;
-if (exon.getEnd()%60==0) {
-	off_2 = (int) (Math.floor(exon.getEnd() / fasta_annotation.get(gen.getValue().getchr())[2]) * fasta_annotation.get(gen.getValue().getchr())[3]) - (int) (Math.floor(exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2]) * fasta_annotation.get(gen.getValue().getchr())[3])+1;
-}else{
-	off_2 = (int) (Math.floor(exon.getEnd() / fasta_annotation.get(gen.getValue().getchr())[2]) * fasta_annotation.get(gen.getValue().getchr())[3]) - (int) (Math.floor(exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2]) * fasta_annotation.get(gen.getValue().getchr())[3]);
-
-}
-*/
+						/*	System.out.println(t.getTrans_id());
+							System.out.println(t.getStart());
+							System.out.println(t.getEnd());
+							System.out.println("Exon:" + exon);
+							System.out.println(fasta_annotation.get(gen.getValue().getchr())[1] + offset - 1);
 							System.out.println("lines in " + lines_for_real);
 							System.out.println("lastL:ine " + last_line);
 							System.out.println("off " + off);
+						*/
 							int length = Math.toIntExact(off) + 1;
 //							int length = Math.toIntExact(exon.getEnd()-exon.getStart()+1);
 
-							System.out.println(length);
 
 							byte[] bytey = new byte[length];
 
 
 							raf.readFully(bytey, 0, length);
-
 							String temp = new String(bytey, StandardCharsets.UTF_8).replaceAll("\n", "");
-//							String temp = new String(bytey, StandardCharsets.UTF_8);
-							System.out.println(temp.toString());
 							stringBuilder.append(temp);
 
 
@@ -238,9 +218,16 @@ if (exon.getEnd()%60==0) {
 							throw new TesException("Error Seeking correnct Line in FastaFile", e);
 						}
 					});
+
+					t.add_Sequence(stringBuilder.toString());
+
+/*
 					System.out.println();
 					System.out.println(stringBuilder.toString());
 					System.out.println();
+					System.out.println(t.get_Sequence());
+*/
+
 				});
 			}
 
@@ -251,6 +238,13 @@ if (exon.getEnd()%60==0) {
 	}
 
 	private void calculateFragments() {
+
+		/*
+		 * TODO: 1. Berechnen der FL (Fragment length)
+		 *
+		 * */
+
+
 
 
 	}

@@ -41,9 +41,13 @@ public class Transcript {
         this.source = source;
     }
 
-    public void addSequence() {
+	public void add_Sequence(String sequence) {
         this.sequence = sequence;
     }
+
+	public String get_Sequence() {
+		return this.sequence;
+	}
 
     public HashSet<String> get_proteins() {
         return this.proteins;
