@@ -13,6 +13,10 @@ import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
+
+import static utils.CommandLine_Parser.*;
 
 public class ReadSimulator implements Runnable {
 
@@ -213,7 +217,7 @@ Loop ueber alle Exons eines Transkripts
 							String temp = new String(bytey, StandardCharsets.UTF_8).replaceAll("\n", "");
 							stringBuilder.append(temp);
 
-
+//TODO to shorten runtime, call the fragment Length Calculation right here and do not specificlly call it twice /
 						} catch (IOException e) {
 							throw new TesException("Error Seeking correnct Line in FastaFile", e);
 						}
@@ -240,13 +244,119 @@ Loop ueber alle Exons eines Transkripts
 	private void calculateFragments() {
 
 		/*
-		 * TODO: 1. Berechnen der FL (Fragment length)
+		 * TODO: 1. Berechnen der FL (Fragment length) mit Gaussian java utils
+		 *
+		 * Berechnen der FL (Fragment Length) mit Hilfe der gegebenen Parameter  (Standart derivate) und frlength.
+		 * waehle eine zufaellige Position auf der Sequenz des Transkripts , die von 0 bis Transkript.length-FL liegt.
+		 * Durch Readlength Parameter zwei Sequenzen generieren, jede so lang wie die Readlength. Diese koennen auch ueberlappen, muessen aber nicht.
+		 * Die erste wird ab der Position des zufaelligen Pointer gelesen, die zweite vom Ende des Transkripts, dabei wird das reverse komplement gelesen, also fuer jede Base muss die komplementaere Base generiert werden.
+		 * Anschliessend muessen fuer beide Sequenzen Mutationen berechnet werden.
+		 * Die Positionen der Sequencen muessen anschliessend gespeichert werden, siehe hierzu ausgabe Files .
+		 * Die Positionen muessen einmal in Genomische Daten umgerechnet werden. (da vorher nur Position relativ auf dem jeweiligen Chromosom angegeben wird).
+		 * mapping.info enthaelt:
+		 * ReadID   Chr Gene    Transkript  Transkriptpos.  t_fw_regvec fw_regvev   t_rw_regvec rw-regveg fw_mutations    rw_mutations
+		 *readid	chr	gene	transcript	t_fw_regvec	t_rw_regvec	fw_regvec	rw_regvec	fw_mut	rw_mut
+		 *
+		 * Zu beachten: Sollte die FL kleiner als die Readlength sein, erneut berechnen.
+		 * Simuliere Mutationen: Auslagern in extra Methode
 		 *
 		 * */
 
+		Random r = new Random();
+		for (Map.Entry<String, Gen> gen : target_genes.entrySet()) {
+			gen.getValue().get_Transcripts().forEach((transcript_id, t) -> {
+//TODO: Transcript length != sequence length!! --> get sequence length for now ?
+				int fragmen_length = (int) Math.max(readlength, (r.nextGaussian() * standardDeviation + frlength));
+				int random_pos = r.nextInt(t.get_Sequence().length() - fragmen_length);
+				String sequence = t.get_Sequence(random_pos, fragmen_length);
 
 
+				String fw = sequence.substring(0, readlength);
+				String rw = reverse_komplement_calc(sequence.substring(sequence.length() - readlength, sequence.length()));
+				/*System.out.println(t.getTrans_id());
+				System.out.println("Sequence Length: "+t.get_Sequence().length());
+				System.out.println("Transcript Length: "+t.get_length());
+				System.out.println("RandomPos: "+ random_pos);
+				System.out.println("fragment_length: "+ fragmen_length);
+				System.out.println("Sequence: \n"+sequence);
+				System.out.println("forward read:\n"+fw);
+				System.out.println("backward read:\n"+rw);
+				System.out.println();*/
 
+
+//			TODO: Generate mutations
+			});
+		}
+	}
+
+
+	private String simulate_Mutations(String sequence, double factor) {
+		return null;
+	}
+
+
+	private HashMap<String, int[]> mutation_generator(String sequence_neutral) {
+		String seq_mutated = "";
+		Random darwin = new Random();
+		char[] beagle = sequence_neutral.toCharArray();
+		/*
+		 * Point of mutation
+		 * */
+		int i = sequence_neutral.length();
+		while (i > 0) {
+			if (darwin.nextFloat() <= mutationrate) {
+
+				int pointmutation = darwin.nextInt(sequence_neutral.length());
+				int randomNum = ThreadLocalRandom.current().nextInt(1, 3);
+				switch (seq_mutated.charAt(i)) {
+
+					case 'A':
+//						TODO: Erzeuge Random zwischen 1 und 3 => ueberpruefen!
+						switch (randomNum) {
+							case 1:
+								beagle[i] = 'C';
+							case 2:
+								beagle[i] = 'G';
+							case 3:
+								beagle[i] = 'T';
+						}
+						break;
+					case 'C':
+
+						break;
+					case 'T':
+						break;
+					case 'G':
+						break;
+				}
+			}
+			i--;
+		}
+
+		return null;
+	}
+
+	private String reverse_komplement_calc(String sequence) {
+		StringBuilder komp = new StringBuilder();
+		for (int i = sequence.length() - 1; i >= 0; i--) {
+
+			switch (sequence.charAt(i)) {
+
+				case 'A':
+					komp.append("T");
+					break;
+				case 'C':
+					komp.append("G");
+					break;
+				case 'T':
+					komp.append("A");
+					break;
+				case 'G':
+					komp.append("C");
+					break;
+			}
+		}
+		return komp.toString();
 	}
 
 	private void printHeaders() {

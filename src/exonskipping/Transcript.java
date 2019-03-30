@@ -23,7 +23,8 @@ public class Transcript {
     private int start;
     private int end;
     private String sequence;
-
+	private int length_exons;
+	private int real_length;
 
     public Transcript(String trans_id, String strand, String proteinID, int start, int end, String source) {
         this.trans_id = trans_id;
@@ -39,6 +40,8 @@ public class Transcript {
         this.sv_to_wt_prots = new HashMap<>();
         this.proteins.add(proteinID);
         this.source = source;
+	    this.length_exons = 0;
+	    this.real_length = 0;
     }
 
 	public void add_Sequence(String sequence) {
@@ -47,6 +50,10 @@ public class Transcript {
 
 	public String get_Sequence() {
 		return this.sequence;
+	}
+
+	public String get_Sequence(int position, int length) {
+		return sequence.substring(position, position + length);
 	}
 
     public HashSet<String> get_proteins() {
@@ -62,6 +69,8 @@ public class Transcript {
         if (stop > this.end) {
             this.end = stop;
         }
+	    this.length_exons = +this.length_exons + stop - start;
+	    this.real_length = this.end - this.start;
     }
 
     public void calculate_Introns() {
@@ -77,14 +86,6 @@ public class Transcript {
 
     public String getTrans_id() {
         return trans_id;
-    }
-
-    public String getStrand() {
-        return strand;
-    }
-
-    public String getSource() {
-        return source;
     }
 
     public int getStart() {
@@ -234,4 +235,13 @@ public class Transcript {
     public TreeSet<Intron> get_Introns() {
         return this.introns;
     }
+
+	public int get_length() {
+		return this.length_exons;
+	}
+
+	public int get_realLength() {
+		return this.real_length;
+	}
+
 }
