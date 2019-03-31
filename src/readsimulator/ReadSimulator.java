@@ -32,16 +32,20 @@ public class ReadSimulator implements Runnable {
 	 * @fw_reads: < read_id, sequence>
 	 * @rw_reads: < read_id, sequence>
 	 * */
-	private HashMap<String, String> fw_reads;
-	private HashMap<String, String> rw_reads;
+	private HashMap<Integer, String> fw_reads;
+	private HashMap<Integer, String> rw_reads;
 
 	/*
 	 * @fw_mutations:<read_id,  mutations>
 	 * @rw_mutations:<read_id,  mutations>
 	 * */
-	private HashMap<String, int[]> fw_mutations;
-	private HashMap<String, int[]> rw_mutations;
+	private HashMap<Integer, String> fw_mutations_pointer;
+	private HashMap<Integer, String> rw_mutations_pointer;
 
+	/*
+	 * Liste mit allen Events pro Readid//Mappinginfo File
+	 * */
+	private HashMap<String, String> read_mappinginfo;
 
 	/*
 	 * fw_regvec position des fw relativ auf dem Genom/Chromosom --> Transkript besteht aus mehr als nur Exons;
@@ -62,6 +66,11 @@ public class ReadSimulator implements Runnable {
 		readcounts = new HashMap<String, HashMap<String, Integer>>();
 		fasta_annotation = new HashMap<String, long[]>();
 		target_genes = new HashMap<>();
+		fw_mutations_pointer = new HashMap<>();
+		rw_mutations_pointer = new HashMap<>();
+		read_mappinginfo = new HashMap<>();
+		fw_reads = new HashMap<>();
+		rw_reads = new HashMap<>();
 
 	}
 
@@ -74,8 +83,9 @@ public class ReadSimulator implements Runnable {
 
 		getSequences();
 
-		calculateFragments();
+		calculate_core();
 
+		print();
 
 	}
 
@@ -112,7 +122,7 @@ public class ReadSimulator implements Runnable {
 		new Thread(new Runnable() {
 			public void run() {
 				try {
-//				Auslesen des FastaindexFiles
+//				Auslesen des reascount files
 					BufferedReader br = new BufferedReader(new FileReader(CommandLine_Parser.inputFile_readcounts));
 					String line = br.readLine();
 					while (line != null) {
@@ -129,7 +139,11 @@ public class ReadSimulator implements Runnable {
 
 							readcounts.put(splitline[0], h);
 						} else {
-							readcounts.get(splitline[0]).put(splitline[1], Integer.valueOf(splitline[2]));
+							if (readcounts.get(splitline[0]).containsKey(splitline[1])) {
+								readcounts.get(splitline[0]).put(splitline[1], readcounts.get(splitline[0]).get(splitline[1] + Integer.valueOf(splitline[2])));
+							} else {
+								readcounts.get(splitline[0]).put(splitline[1], Integer.valueOf(splitline[2]));
+							}
 						}
 						line = br.readLine();
 					}
@@ -245,7 +259,7 @@ Loop ueber alle Exons eines Transkripts
 							String temp = new String(bytey, StandardCharsets.UTF_8).replaceAll("\n", "");
 							stringBuilder.append(temp);
 
-//TODO to shorten runtime, call the fragment Length Calculation right here and do not specificlly call it twice /
+//TODO: Optimierung: Alles in einer for loop loesen.(generate reads and mutation)
 						} catch (IOException e) {
 							throw new TesException("Error Seeking correnct Line in FastaFile", e);
 						}
@@ -269,7 +283,7 @@ Loop ueber alle Exons eines Transkripts
 
 	}
 
-	private void calculateFragments() {
+	private void calculate_core() {
 
 		/*
 		 * TODO: 1. Berechnen der FL (Fragment length) mit Gaussian java utils
@@ -289,52 +303,81 @@ Loop ueber alle Exons eines Transkripts
 		 * Simuliere Mutationen: Auslagern in extra Methode
 		 *
 		 * */
-
+		int read_id = 0;
 		Random r = new Random();
+
 		for (Map.Entry<String, Gen> gen : target_genes.entrySet()) {
-			gen.getValue().get_Transcripts().forEach((transcript_id, t) -> {
-//TODO: Transcript length != sequence length!! --> get sequence length for now ?
-				int fragmen_length = (int) Math.max(readlength, (r.nextGaussian() * standardDeviation + frlength));
-				int random_pos = r.nextInt(t.get_Sequence().length() - fragmen_length);
-				String sequence = t.get_Sequence(random_pos, fragmen_length);
+
+			for (Transcript t : gen.getValue().get_Transcripts().values()) {
+
+				for (int i = readcounts.get(gen.getKey()).get(t.getTrans_id()) - 1; i >= 0; i--) {
+
+					int fragmen_length = (int) Math.max(readlength, (r.nextGaussian() * standardDeviation + frlength));
+					int random_pos = r.nextInt(t.get_Sequence().length() - fragmen_length);
+					String sequence = t.get_Sequence(random_pos, fragmen_length);
 
 
-				String fw = sequence.substring(0, readlength);
-				String rw = reverse_komplement_calc(sequence.substring(sequence.length() - readlength, sequence.length()));
-				/*System.out.println(t.getTrans_id());
-				System.out.println("Sequence Length: "+t.get_Sequence().length());
-				System.out.println("Transcript Length: "+t.get_length());
-				System.out.println("RandomPos: "+ random_pos);
-				System.out.println("fragment_length: "+ fragmen_length);
-				System.out.println("Sequence: \n"+sequence);
-				System.out.println("forward read:\n"+fw);
-				System.out.println("backward read:\n"+rw);
-				System.out.println();*/
+					String fw = sequence.substring(0, readlength);
+					String rw = reverse_komplement_calc(sequence.substring(sequence.length() - readlength, sequence.length()));
 
-//TODO: Entwerder direkt printen oder aber erst noch in HashMap abspeichern. Speichern in Hash!
-//			TODO: Generate mutations
-			});
+					String[] mutated_seq_fw = mutation_generator(read_id, fw);
+					String[] mutated_seq_rw = mutation_generator(read_id, rw);
+
+					fw_mutations_pointer.put(read_id, mutated_seq_fw[1]);
+					rw_mutations_pointer.put(read_id, mutated_seq_rw[1]);
+
+					fw_reads.put(read_id, mutated_seq_fw[0]);
+					rw_reads.put(read_id, mutated_seq_rw[0]);
+
+//TODO: Ausgeben der Coordinaten, lokal und chromosomal
+
+
+					/*Auf Transkript*/
+					int[] t_fw_regveg = {random_pos, random_pos + readlength};
+					int[] t_rw_regveg = {random_pos + fragmen_length - readlength, random_pos + fragmen_length};
+
+					/*Auf Gene/Chromosom*/
+					int[] fw_regvec = t.get_Chromosomal_location(random_pos, random_pos + readlength);
+					int[] rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length);
+
+
+//TODO: Safe in HashMap or something
+/*
+					System.out.println(t.getTrans_id());
+					System.out.println("Sequence Length: " + t.get_Sequence().length());
+					System.out.println("Transcript Length: " + t.get_length());
+					System.out.println("RandomPos: " + random_pos);
+					System.out.println("fragment_length: " + fragmen_length);
+					System.out.println("Sequence: \n" + sequence);
+					System.out.println("forward read:\n" + fw);
+					System.out.println("forward read: Mutated \n" + mutated_seq_fw[0]);
+					System.out.println("backward read:\n" + rw);
+					System.out.println("backward read: Mutated \n" + mutated_seq_rw[0]);
+					System.out.println();
+					System.out.println("read_id " + read_id);
+					System.out.println("fw_mutations_pointer: " + fw_mutations_pointer.get(read_id));
+					System.out.println("rw_mutations_pointer: " + rw_mutations_pointer.get(read_id));
+
+
+					System.out.println();*/
+
+
+					read_id++;
+
+
+				}
+			}
 		}
 	}
 
-
-	private HashMap<String, int[]> mutation_generator(String event_id, String sequence_neutral) {
+	private String[] mutation_generator(int event_id, String sequence_neutral) {
 
 		/*
-
-		Return:
-		1. Mutierte Sequenz>> in Hashmap abspeichern
-		2.
-
-		* HashMap mutation_list: <read_id, [fw_mutations_index],[rw_mutations_index]
-		* problem:  Ein Read kann x viele mutationen enthalen --> List<int>
-		* Was muss gespeichert werden ?
-		* 1. wo
-		* "Was" muss nicht gespeichert werden .
-		*
-		* <String, fw_list, rw_list >
+		@return: [0]= mutated String, [1] = | seperated List of numbers, where mutations happened.
+		Mutates String and returns String with mutations, adds readid_hashmap values
 		* */
-		HashMap<String, int[]> mutation_list = new HashMap<>();
+
+		StringBuilder mutationsocc = new StringBuilder();
 
 
 		Random darwin = new Random();
@@ -343,60 +386,86 @@ Loop ueber alle Exons eines Transkripts
 
 		int i = sequence_neutral.length() - 1;
 		while (i >= 0) {
-			if (darwin.nextFloat() <= mutationrate) {
+			if (darwin.nextFloat() <= mutationrate / 100) {
 
 				int pointmutation = darwin.nextInt(sequence_neutral.length());
-				int randomNum = ThreadLocalRandom.current().nextInt(1, 3);
-
-				System.out.println("Random Number with ThreadLovalRandom: " + randomNum);
+				int randomNum = ThreadLocalRandom.current().nextInt(1, 4);
 
 				switch (sequence_neutral.charAt(i)) {
 					case 'A':
-//						TODO: Erzeuge Random zwischen 1 und 3 => ueberpruefen!
 						switch (randomNum) {
 							case 1:
 								beagle[i] = 'C';
+								mutationsocc.append(i + ",");
+								break;
 							case 2:
 								beagle[i] = 'G';
+								mutationsocc.append(i + ",");
+								break;
 							case 3:
 								beagle[i] = 'T';
+								mutationsocc.append(i + ",");
+								break;
 						}
 						break;
 					case 'C':
 						switch (randomNum) {
 							case 1:
 								beagle[i] = 'A';
+								mutationsocc.append(i + ",");
+								break;
 							case 2:
 								beagle[i] = 'G';
+								mutationsocc.append(i + ",");
+								break;
 							case 3:
 								beagle[i] = 'T';
+								mutationsocc.append(i + ",");
+								break;
 						}
 						break;
 					case 'T':
 						switch (randomNum) {
 							case 1:
 								beagle[i] = 'C';
+								mutationsocc.append(i + ",");
+								break;
 							case 2:
 								beagle[i] = 'G';
+								mutationsocc.append(i + ",");
+								break;
 							case 3:
 								beagle[i] = 'A';
+								mutationsocc.append(i + ",");
+								break;
 						}
 						break;
 					case 'G':
 						switch (randomNum) {
 							case 1:
 								beagle[i] = 'C';
+								mutationsocc.append(i + ",");
+								break;
 							case 2:
 								beagle[i] = 'A';
+								mutationsocc.append(i + ",");
+								break;
 							case 3:
 								beagle[i] = 'T';
+								mutationsocc.append(i + ",");
+								break;
 						}
 						break;
 				}
 			}
 			i--;
 		}
-		return null;
+		if (mutationsocc.length() != 0)
+			if (mutationsocc.charAt(mutationsocc.length() - 1) == ',') {
+				mutationsocc.deleteCharAt(mutationsocc.length() - 1);
+			}
+
+		return new String[]{new String(beagle), mutationsocc.toString()};
 	}
 
 	private String reverse_komplement_calc(String sequence) {
@@ -423,12 +492,22 @@ Loop ueber alle Exons eines Transkripts
 	}
 
 	private void printHeaders() {
+//TODO: aufspalten in jeweiliges File
+		/*
+		 * To read.mappinginfo:
+		 * */
+		System.out.println("readid\tchr\tgene\ttranscript\tt_fw_regvec\tt_rw_regcev\tfw_regvec\trw_regveg\tfw_mut\trw_mut");
 
-//		TODO: Print Headers to outputfiles; generate outputfiles. Remember to concat, not overwrite them later on!
-
+		/*
+		 * to rw und fw Fasta: extra ausgabe. siehe print()
+		 * */
 
 	}
 
 
+	public void print() {
+//		TODO Set Filestreams and print to files
+
+	}
 }
 

@@ -30,6 +30,7 @@ public class Transcript {
      * @exon_to_localMap: Stores the Exon_id and maps it to the lokal coordinates of the exon (relative to length_exons)
      * */
     private HashMap<String, int[]> exon_to_lokalMap;
+    //TODO: Transcript length != sequence length!! --> get sequence length for now ?
 
 
     public Transcript(String trans_id, String strand, String proteinID, int start, int end, String source) {
@@ -82,6 +83,42 @@ public class Transcript {
 
     }
 
+
+    public int[] get_Chromosomal_location(int local_start, int local_stop) {
+
+        int[] position_s_e = new int[2];
+
+        for (Exon ex : exons) {
+
+            /*Ende des Exons bereits vor Start*/
+            if (exon_to_lokalMap.get(ex.get_ID())[1] < local_start) {
+                continue;
+            }
+            /*Ende lokal bereits vor Exon Anfang*/
+            if (exon_to_lokalMap.get(ex.get_ID())[0] > local_stop) {
+                continue;
+            }
+
+            if (exon_to_lokalMap.get(ex.get_ID())[0] <= local_start) {
+
+
+            }
+
+            if (ex.getLength() < local_stop - local_start) {
+                get_Chromosomal_location(new int start = 90, new int stop = 0);
+            }
+
+            if (ex.getLength() >= local_stop - local_start) {
+                position_s_e[0] = ex.getStart() + exon_to_lokalMap.get(ex.get_ID())[1];
+            }
+
+
+        }
+
+
+        return position_s_e;
+
+    }
 
     public void calculate_Introns() {
         Region temp = null;

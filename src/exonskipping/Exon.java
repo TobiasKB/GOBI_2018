@@ -8,4 +8,8 @@ public class Exon extends Region {
         super(start, end);
 		this.id = identifier;
     }
+
+	public String get_ID() {
+		return this.id;
+	}
 }
