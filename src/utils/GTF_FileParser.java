@@ -10,9 +10,9 @@ public final class GTF_FileParser extends Thread {
 	 **/
 	private static String feature = "exon";
 	private static TreeSet<Integer> tabs = new TreeSet<Integer>();
-	private static String cdscheck, chr, strand, gene_id, protein_id, transcript_id, gene_name, start, end = "";
+	private static String cdscheck, chr, strand, gene_id, protein_id, transcript_id, gene_name, start, end, exon_id = "";
 	private static StringBuilder cleanliner = new StringBuilder();
-	private static String[] cleanLine = new String[8];
+	private static String[] cleanLine = new String[9];
 	private static String filteroption_1;
 	private static String filteroption_2;
 	private static boolean filter1;
@@ -97,6 +97,10 @@ public final class GTF_FileParser extends Thread {
 					gene_name = attr_splice.nextToken().replaceAll("\"", "");
 //                    System.out.println(gene_name);
 					continue;
+				case "exon_id":
+					exon_id = attr_splice.nextToken().replaceAll("\"", "");
+//					System.out.println(exon_id);
+					continue;
 			}
 
 		}
@@ -106,14 +110,18 @@ public final class GTF_FileParser extends Thread {
 		if (protein_id.isEmpty()) {
 			protein_id = "?";
 		}
+		if (exon_id.isEmpty()) {
+			exon_id = "?";
+		}
 //        System.out.println();
 		try {
-			if (chr.isEmpty() | start.isEmpty() | end.isEmpty() | strand.isEmpty() | gene_id.isEmpty() | protein_id.isEmpty() | transcript_id.isEmpty() | gene_name.isEmpty()) {
+			if (chr.isEmpty() | exon_id.isEmpty() | start.isEmpty() | end.isEmpty() | strand.isEmpty() | gene_id.isEmpty() | protein_id.isEmpty() | transcript_id.isEmpty() | gene_name.isEmpty()) {
 				throw new IllegalStateException("Necessary Value for Datastructure is empty");
 			}
 		} catch (Exception e) {
 			throw new TesException("GTF_File_Parser ", e);
 		}
+
 
 		cleanLine[0] = chr;
 		cleanLine[1] = start;
@@ -123,7 +131,9 @@ public final class GTF_FileParser extends Thread {
 		cleanLine[5] = gene_id;
 		cleanLine[6] = protein_id;
 		cleanLine[7] = transcript_id;
-		/*Better: Clean Line contains , weil variabler */
+		cleanLine[8] = exon_id;
+
+
 		if (filter1) {
 			if (!gene_id.equals(filteroption1)) {
 				return null;

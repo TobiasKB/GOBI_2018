@@ -28,6 +28,34 @@ public class ReadSimulator implements Runnable {
 	private HashMap<String, HashMap<String, Integer>> readcounts;
 	private HashMap<String, long[]> fasta_annotation;
 	private HashMap<String, Gen> target_genes;
+	/*
+	 * @fw_reads: < read_id, sequence>
+	 * @rw_reads: < read_id, sequence>
+	 * */
+	private HashMap<String, String> fw_reads;
+	private HashMap<String, String> rw_reads;
+
+	/*
+	 * @fw_mutations:<read_id,  mutations>
+	 * @rw_mutations:<read_id,  mutations>
+	 * */
+	private HashMap<String, int[]> fw_mutations;
+	private HashMap<String, int[]> rw_mutations;
+
+
+	/*
+	 * fw_regvec position des fw relativ auf dem Genom/Chromosom --> Transkript besteht aus mehr als nur Exons;
+	 * allerdings werden nur Exons betrachtet --> gib die Position der jeweiligen Exons aus.
+	 * Also fur Transkript fw 0-75 kann auf 2 oder mehr Exons aufgeteilt werden.
+	 * --> get Exon? get Exon position?
+	 * rw_regvec
+	 *
+	 * t_fw_regvec position des fw relativ auf dem Transkript
+	 * t_rw regvec positopm des rw relativ auf dem Transkript
+	 * Beispiel: Transkript beginnt bei 390842009; Laenge: 305 // ein Read liegt bei 0-75, einer bei 230-305
+	 * (0 based, End EXCLUSIVE)
+	 * */
+
 
 	public ReadSimulator() {
 
@@ -135,7 +163,7 @@ public class ReadSimulator implements Runnable {
 								if (!target_genes.get(cleanline[5]).get_Transcripts().containsKey(cleanline[7]))
 									target_genes.get(cleanline[5]).add_Transcript(new Transcript(cleanline[7], cleanline[3], cleanline[6], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[5]));
 
-								target_genes.get(cleanline[5]).add_Region(cleanline[7], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]));
+								target_genes.get(cleanline[5]).add_Region(cleanline[7], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[8]);
 								target_genes.get(cleanline[5]).add_nprots();
 							}
 						}
@@ -283,33 +311,46 @@ Loop ueber alle Exons eines Transkripts
 				System.out.println("backward read:\n"+rw);
 				System.out.println();*/
 
-
+//TODO: Entwerder direkt printen oder aber erst noch in HashMap abspeichern. Speichern in Hash!
 //			TODO: Generate mutations
 			});
 		}
 	}
 
 
-	private String simulate_Mutations(String sequence, double factor) {
-		return null;
-	}
+	private HashMap<String, int[]> mutation_generator(String event_id, String sequence_neutral) {
+
+		/*
+
+		Return:
+		1. Mutierte Sequenz>> in Hashmap abspeichern
+		2.
+
+		* HashMap mutation_list: <read_id, [fw_mutations_index],[rw_mutations_index]
+		* problem:  Ein Read kann x viele mutationen enthalen --> List<int>
+		* Was muss gespeichert werden ?
+		* 1. wo
+		* "Was" muss nicht gespeichert werden .
+		*
+		* <String, fw_list, rw_list >
+		* */
+		HashMap<String, int[]> mutation_list = new HashMap<>();
 
 
-	private HashMap<String, int[]> mutation_generator(String sequence_neutral) {
-		String seq_mutated = "";
 		Random darwin = new Random();
 		char[] beagle = sequence_neutral.toCharArray();
-		/*
-		 * Point of mutation
-		 * */
-		int i = sequence_neutral.length();
-		while (i > 0) {
+
+
+		int i = sequence_neutral.length() - 1;
+		while (i >= 0) {
 			if (darwin.nextFloat() <= mutationrate) {
 
 				int pointmutation = darwin.nextInt(sequence_neutral.length());
 				int randomNum = ThreadLocalRandom.current().nextInt(1, 3);
-				switch (seq_mutated.charAt(i)) {
 
+				System.out.println("Random Number with ThreadLovalRandom: " + randomNum);
+
+				switch (sequence_neutral.charAt(i)) {
 					case 'A':
 //						TODO: Erzeuge Random zwischen 1 und 3 => ueberpruefen!
 						switch (randomNum) {
@@ -322,17 +363,39 @@ Loop ueber alle Exons eines Transkripts
 						}
 						break;
 					case 'C':
-
+						switch (randomNum) {
+							case 1:
+								beagle[i] = 'A';
+							case 2:
+								beagle[i] = 'G';
+							case 3:
+								beagle[i] = 'T';
+						}
 						break;
 					case 'T':
+						switch (randomNum) {
+							case 1:
+								beagle[i] = 'C';
+							case 2:
+								beagle[i] = 'G';
+							case 3:
+								beagle[i] = 'A';
+						}
 						break;
 					case 'G':
+						switch (randomNum) {
+							case 1:
+								beagle[i] = 'C';
+							case 2:
+								beagle[i] = 'A';
+							case 3:
+								beagle[i] = 'T';
+						}
 						break;
 				}
 			}
 			i--;
 		}
-
 		return null;
 	}
 

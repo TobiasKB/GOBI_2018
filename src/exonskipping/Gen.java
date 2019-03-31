@@ -68,8 +68,8 @@ public class Gen {
         }
     }
 
-    public void add_Region(String trans_id, int start, int end) {
-        tmap.get(trans_id).add_Region(start, end);
+    public void add_Region(String trans_id, int start, int end, String identifier) {
+        tmap.get(trans_id).add_Region(start, end, identifier);
         update_end(end);
         update_start(start);
     }

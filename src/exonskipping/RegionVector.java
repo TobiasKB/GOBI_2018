@@ -20,7 +20,7 @@ public class RegionVector implements Comparable<RegionVector> {
     public int end;
 
 
-    <T> RegionVector(T regionSet) {
+    public <T> RegionVector(T regionSet) {
         this.regions = (TreeSet) regionSet;
         this.length = 0;
         this.size = regions.size();

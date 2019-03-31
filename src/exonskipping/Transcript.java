@@ -26,6 +26,12 @@ public class Transcript {
 	private int length_exons;
 	private int real_length;
 
+    /*
+     * @exon_to_localMap: Stores the Exon_id and maps it to the lokal coordinates of the exon (relative to length_exons)
+     * */
+    private HashMap<String, int[]> exon_to_lokalMap;
+
+
     public Transcript(String trans_id, String strand, String proteinID, int start, int end, String source) {
         this.trans_id = trans_id;
         this.strand = strand;
@@ -42,6 +48,7 @@ public class Transcript {
         this.source = source;
 	    this.length_exons = 0;
 	    this.real_length = 0;
+        this.exon_to_lokalMap = new HashMap<String, int[]>();
     }
 
 	public void add_Sequence(String sequence) {
@@ -60,18 +67,21 @@ public class Transcript {
         return this.proteins;
     }
 
-    public void add_Region(int start, int stop) {
+    public void add_Region(int start, int stop, String identifier) {
 
-        exons.add(new Exon(start, stop));
+        exons.add(new Exon(start, stop, identifier));
         if (start < this.start) {
             this.start = start;
         }
         if (stop > this.end) {
             this.end = stop;
         }
-	    this.length_exons = +this.length_exons + stop - start;
-	    this.real_length = this.end - this.start;
+        exon_to_lokalMap.put(identifier, new int[]{this.length_exons, stop - start});
+        this.length_exons = +this.length_exons + stop - start;
+        this.real_length = this.end - this.start;
+
     }
+
 
     public void calculate_Introns() {
         Region temp = null;
