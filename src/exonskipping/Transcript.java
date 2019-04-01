@@ -17,7 +17,7 @@ public class Transcript {
 	private String trans_id;
 	private String strand;
 	private String source;
-	private HashSet<Exon> exons;
+	private TreeSet<Exon> exons;
 	private TreeSet<Intron> introns;
 	private HashSet<String> proteins;
 	private int start;
@@ -36,7 +36,7 @@ public class Transcript {
 	public Transcript(String trans_id, String strand, String proteinID, int start, int end, String source) {
 		this.trans_id = trans_id;
 		this.strand = strand;
-		exons = new HashSet<>();
+		exons = new TreeSet<>();
 		introns = new TreeSet<Intron>();
 		this.start = start;
 		this.end = end;
@@ -84,7 +84,6 @@ public class Transcript {
 
 		*/
 
-		System.out.println(identifier);
 
 		this.length_exons = +this.length_exons + stop - start;
 		this.real_length = this.end - this.start;
@@ -93,41 +92,77 @@ public class Transcript {
 
 
 	public String get_Chromosomal_location(int local_start, int local_stop) {
+		/*
+		 * Ausgabe nicht korrekt. Gerade eben wird a) immer nur ein Exon ausgegeben und b) es ist fuer fw und rw meistens das gleiche, sehr suspiciouos.
+		 *
+		 * */
+
 		System.out.println();
-//        String koordiantes;
 		int[] koordinate = new int[2];
 		StringBuilder koordinates = new StringBuilder();
-
 		for (Exon ex : exons) {
-/*
-			System.out.println(ex.get_ID());
-			System.out.println(local_start);
-			System.out.println(local_stop);
+
+
+//			System.out.println(ex.get_ID());
+//			System.out.println(ex);
+			System.out.println("localstart:" + local_start);
+			System.out.println("local stop:" + local_stop);
 			System.out.println(exon_to_lokalMap.get(ex.get_ID())[0]);
-			System.out.println(exon_to_lokalMap.get(ex.get_ID())[1]);*/
+			System.out.println(exon_to_lokalMap.get(ex.get_ID())[1]);
+			System.out.println();
+
+
 //			Ende des Exons bereits vor Start
 			if (exon_to_lokalMap.get(ex.get_ID())[1] < local_start) {
 				continue;
 			}
 //			Ende lokal bereits vor Exon Anfang
 			if (exon_to_lokalMap.get(ex.get_ID())[0] > local_stop) {
-				continue;
+				return koordinates.toString();
 			}
+
 
 			if (exon_to_lokalMap.get(ex.get_ID())[0] <= local_start) {
-				koordinate[1] = ex.getEnd();
-				if (ex.getLength() >= (local_stop - local_start)) {
-					koordinate[0] = ex.getStart() + exon_to_lokalMap.get(ex.get_ID())[0] + (exon_to_lokalMap.get(ex.get_ID())[0] - local_start);
-					koordinate[1] = koordinate[1] + (local_stop - local_start);
-					return koordinates.append(koordinate[0] + "-" + koordinate[1]).toString();
-				}
-				koordinate[0] = ex.getStart() + exon_to_lokalMap.get(ex.get_ID())[0] + (exon_to_lokalMap.get(ex.get_ID())[0] - local_start);
-				koordinate[1] = ex.getEnd();
-				koordinates.append(koordinate[0] + "-" + koordinate[1] + "|");
-				local_start = local_start + koordinate[1] - koordinate[0];
+				/*System.out.println("Exonlength: " + ex.getLength());
+				System.out.println("local_stop-local_start " + (local_stop - local_start));
+*/
 
+				if (ex.getLength() >= (local_stop - local_start)) {
+
+
+					koordinate[0] = ex.getStart() + exon_to_lokalMap.get(ex.get_ID())[0] + (exon_to_lokalMap.get(ex.get_ID())[0] - local_start);
+
+					if (ex.getEnd() < local_stop) {
+						koordinate[1] = ex.getEnd();
+						local_start = local_start + (koordinate[1] - koordinate[0]);
+						koordinates.append(koordinate[0] + "|" + koordinate[1]);
+
+					} else {
+						koordinate[1] = koordinate[0] + (local_stop - local_start);
+						return koordinates.append(koordinate[0] + "-" + koordinate[1]).toString();
+					}
+
+				} else {
+
+
+					koordinate[0] = ex.getStart() + exon_to_lokalMap.get(ex.get_ID())[0] + (exon_to_lokalMap.get(ex.get_ID())[0] - local_start);
+
+					if (ex.getEnd() < local_stop) {
+
+						koordinate[1] = ex.getEnd();
+						local_start = local_start + (koordinate[1] - koordinate[0]);
+						koordinates.append(koordinate[0] + "-" + koordinate[1] + "|");
+					} else {
+
+
+					}
+
+
+
+				}
 			}
 		}
+//		TODO: Ausgabe ist hier nicht korrekt.
 		return "WRONG WRONG WRONG WRONG";
 	}
 
@@ -268,7 +303,7 @@ public class Transcript {
 		sv_wt_map_temp.clear();
 	}
 
-	public HashSet<Exon> getExons() {
+	public TreeSet<Exon> getExons() {
 		return this.exons;
 	}
 

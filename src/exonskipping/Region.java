@@ -41,21 +41,23 @@ public class Region implements Comparable<Region> {
     @Override
     public int compareTo(Region other) {
 
+/*
         if (this.start != other.start) {
             return this.start - other.start;
         } else {
             return this.end - other.end;
         }
+*/
 
 
-      /*  Region otherr = other;
+        Region otherr = other;
         if (this.start > otherr.start) {
             return 1;
         } else if (this.end < otherr.start) {
             return -1;
         } else {
             return 0;
-        }*/
+        }
     }
 
     public boolean equals(Region other) {

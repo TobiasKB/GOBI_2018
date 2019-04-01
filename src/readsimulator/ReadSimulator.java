@@ -2,6 +2,7 @@ package readsimulator;
 
 import exonskipping.Gen;
 import exonskipping.Transcript;
+import org.apache.commons.math3.distribution.NormalDistribution;
 import utils.CommandLine_Parser;
 import utils.GTF_FileParser;
 import utils.TesException;
@@ -59,6 +60,7 @@ public class ReadSimulator implements Runnable {
 	 * Beispiel: Transkript beginnt bei 390842009; Laenge: 305 // ein Read liegt bei 0-75, einer bei 230-305
 	 * (0 based, End EXCLUSIVE)
 	 * */
+	private NormalDistribution rand;
 
 
 	public ReadSimulator() {
@@ -71,6 +73,7 @@ public class ReadSimulator implements Runnable {
 		read_mappinginfo = new HashMap<>();
 		fw_reads = new HashMap<>();
 		rw_reads = new HashMap<>();
+
 
 	}
 
@@ -312,7 +315,18 @@ Loop ueber alle Exons eines Transkripts
 
 				for (int i = readcounts.get(gen.getKey()).get(t.getTrans_id()) - 1; i >= 0; i--) {
 
-					int fragmen_length = (int) Math.max(readlength, (r.nextGaussian() * standardDeviation + frlength));
+
+					rand = new NormalDistribution(frlength, standardDeviation);
+
+
+//					int fragmen_length = (int) Math.max(readlength, (r.nextGaussian() * standardDeviation + frlength));
+					int fragmen_length;
+
+					do {
+						fragmen_length = (int) rand.sample();
+					} while (fragmen_length <= readlength || fragmen_length + 1 >= t.get_Sequence().length());
+
+
 					int random_pos = r.nextInt(t.get_Sequence().length() - fragmen_length);
 					String sequence = t.get_Sequence(random_pos, fragmen_length);
 
@@ -337,21 +351,21 @@ Loop ueber alle Exons eines Transkripts
 					int[] t_rw_regveg = {random_pos + fragmen_length - readlength, random_pos + fragmen_length};
 
 					/*Auf Gene/Chromosom*/
-//					TODO: Hier stimmt noch etwas mit den readlengths nicht!
 					String fw_regvec = t.get_Chromosomal_location(random_pos, random_pos + readlength);
 					String rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length);
 
 
-					System.out.println(t.getTrans_id());
+					System.out.println("Readlength: " + readlength);
+					System.out.println("Transcript_id: " + t.getTrans_id());
 					System.out.println("Sequence Length: " + t.get_Sequence().length());
-					System.out.println("Transcript Length: " + t.get_length());
+//					System.out.println("Transcript Length: " + t.get_length());
 					System.out.println("RandomPos: " + random_pos);
 					System.out.println("fragment_length: " + fragmen_length);
-					System.out.println("Sequence: \n" + sequence);
-					System.out.println("forward read:\n" + fw);
-					System.out.println("forward read: Mutated \n" + mutated_seq_fw[0]);
-					System.out.println("backward read:\n" + rw);
-					System.out.println("backward read: Mutated \n" + mutated_seq_rw[0]);
+//					System.out.println("Sequence: \n" + sequence);
+//					System.out.println("forward read:\n" + fw);
+//					System.out.println("forward read: Mutated \n" + mutated_seq_fw[0]);
+//					System.out.println("backward read:\n" + rw);
+//					System.out.println("backward read: Mutated \n" + mutated_seq_rw[0]);
 					System.out.println();
 					System.out.println("read_id " + read_id);
 					System.out.println("fw_mutations_pointer: " + fw_mutations_pointer.get(read_id));
