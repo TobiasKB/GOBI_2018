@@ -337,12 +337,11 @@ Loop ueber alle Exons eines Transkripts
 					int[] t_rw_regveg = {random_pos + fragmen_length - readlength, random_pos + fragmen_length};
 
 					/*Auf Gene/Chromosom*/
-					int[] fw_regvec = t.get_Chromosomal_location(random_pos, random_pos + readlength);
-					int[] rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length);
+//					TODO: Hier stimmt noch etwas mit den readlengths nicht!
+					String fw_regvec = t.get_Chromosomal_location(random_pos, random_pos + readlength);
+					String rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length);
 
 
-//TODO: Safe in HashMap or something
-/*
 					System.out.println(t.getTrans_id());
 					System.out.println("Sequence Length: " + t.get_Sequence().length());
 					System.out.println("Transcript Length: " + t.get_length());
@@ -357,10 +356,11 @@ Loop ueber alle Exons eines Transkripts
 					System.out.println("read_id " + read_id);
 					System.out.println("fw_mutations_pointer: " + fw_mutations_pointer.get(read_id));
 					System.out.println("rw_mutations_pointer: " + rw_mutations_pointer.get(read_id));
+					System.out.println("fw_regvec: " + fw_regvec);
+					System.out.println("rw_regvec: " + rw_regvec);
 
 
-					System.out.println();*/
-
+					System.out.println();
 
 					read_id++;
 
