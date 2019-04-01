@@ -93,6 +93,7 @@ public class Transcript {
 
 	public String get_Chromosomal_location(int local_start, int local_stop) {
 
+
 		int[] koordinate = new int[2];
 		StringBuilder koordinates = new StringBuilder();
 		for (Exon ex : exons) {
