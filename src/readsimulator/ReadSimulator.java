@@ -11,6 +11,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +48,7 @@ public class ReadSimulator implements Runnable {
 	/*
 	 * Liste mit allen Events pro Readid//Mappinginfo File
 	 * */
-	private HashMap<String, String> read_mappinginfo;
+	private HashMap<Integer, String> read_mappinginfo;
 
 	/*
 	 * fw_regvec position des fw relativ auf dem Genom/Chromosom --> Transkript besteht aus mehr als nur Exons;
@@ -289,7 +291,7 @@ Loop ueber alle Exons eines Transkripts
 	private void calculate_core() {
 
 		/*
-		 * TODO: 1. Berechnen der FL (Fragment length) mit Gaussian java utils
+		 *
 		 *
 		 * Berechnen der FL (Fragment Length) mit Hilfe der gegebenen Parameter  (Standart derivate) und frlength.
 		 * waehle eine zufaellige Position auf der Sequenz des Transkripts , die von 0 bis Transkript.length-FL liegt.
@@ -315,7 +317,7 @@ Loop ueber alle Exons eines Transkripts
 
 				for (int i = readcounts.get(gen.getKey()).get(t.getTrans_id()) - 1; i >= 0; i--) {
 
-
+					StringBuilder rudi = new StringBuilder();
 					rand = new NormalDistribution(frlength, standardDeviation);
 
 
@@ -343,9 +345,6 @@ Loop ueber alle Exons eines Transkripts
 					fw_reads.put(read_id, mutated_seq_fw[0]);
 					rw_reads.put(read_id, mutated_seq_rw[0]);
 
-//TODO: Ausgeben der Coordinaten, lokal und chromosomal
-
-
 					/*Auf Transkript*/
 					int[] t_fw_regveg = {random_pos, random_pos + readlength};
 					int[] t_rw_regveg = {random_pos + fragmen_length - readlength, random_pos + fragmen_length};
@@ -353,6 +352,18 @@ Loop ueber alle Exons eines Transkripts
 					/*Auf Gene/Chromosom*/
 					String fw_regvec = t.get_Chromosomal_location(random_pos, random_pos + readlength);
 					String rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length);
+
+					rudi.append(read_id + "\t");
+					rudi.append(gen.getValue().getchr() + "\t");
+					rudi.append(gen.getKey() + "\t");
+					rudi.append(t.getTrans_id() + "\t");
+					rudi.append(t_fw_regveg[0] + "-" + t_fw_regveg[1] + "\t");
+					rudi.append(t_rw_regveg[0] + "-" + t_rw_regveg[1] + "\t");
+					rudi.append(fw_regvec + "\t");
+					rudi.append(rw_regvec + "\t");
+					rudi.append(mutated_seq_fw[1] + "\t");
+					rudi.append(mutated_seq_rw[1] + "\t");
+					rudi.append("\n");
 
 /*
 
@@ -375,6 +386,9 @@ Loop ueber alle Exons eines Transkripts
 					System.out.println("rw_regvec: " + rw_regvec);
 					System.out.println();
 */
+
+
+					read_mappinginfo.put(read_id, rudi.toString());
 
 					read_id++;
 
@@ -505,12 +519,11 @@ Loop ueber alle Exons eines Transkripts
 		return komp.toString();
 	}
 
-	private void printHeaders() {
-//TODO: aufspalten in jeweiliges File
+	private String printHeaders() {
 		/*
 		 * To read.mappinginfo:
 		 * */
-		System.out.println("readid\tchr\tgene\ttranscript\tt_fw_regvec\tt_rw_regcev\tfw_regvec\trw_regveg\tfw_mut\trw_mut");
+		return "readid\tchr\tgene\ttranscript\tt_fw_regvec\tt_rw_regcev\tfw_regvec\trw_regveg\tfw_mut\trw_mut\n";
 
 		/*
 		 * to rw und fw Fasta: extra ausgabe. siehe print()
@@ -522,6 +535,114 @@ Loop ueber alle Exons eines Transkripts
 	public void print() {
 //		TODO Set Filestreams and print to files
 
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+
+
+					RandomAccessFile print_stream_fw_reads = new RandomAccessFile(outputDirectory + "/fw.fastq", "rw");
+					FileChannel channel_1 = print_stream_fw_reads.getChannel();
+					StringBuilder fileContent = new StringBuilder();
+
+
+					for (Map.Entry<Integer, String> m : fw_reads.entrySet()) {
+
+						fileContent.append("@");
+						fileContent.append(Integer.valueOf(m.getKey()) + "\n");
+						fileContent.append(m.getValue() + "\n");
+						fileContent.append("+" + Integer.valueOf(m.getKey()) + "\n");
+						for (int i = 0; i < m.getValue().length(); i++) {
+							fileContent.append("I");
+						}
+						fileContent.append("\n");
+
+					}
+
+
+					byte[] strBytes = fileContent.toString().getBytes();
+					ByteBuffer buffy = ByteBuffer.allocate(strBytes.length);
+					buffy.put(strBytes);
+					buffy.flip();
+					channel_1.write(buffy);
+					print_stream_fw_reads.close();
+					channel_1.close();
+
+
+				} catch (IOException e) {
+					throw new TesException("Could not Read inputFile_fidx", e);
+				}
+			}
+		}).start();
+
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+
+
+					RandomAccessFile print_stream_rw_reads = new RandomAccessFile(outputDirectory + "/rw.fastq", "rw");
+					FileChannel channel_2 = print_stream_rw_reads.getChannel();
+					StringBuilder fileContent = new StringBuilder();
+
+
+					for (Map.Entry<Integer, String> m : rw_reads.entrySet()) {
+
+						fileContent.append("@");
+						fileContent.append(Integer.valueOf(m.getKey()) + "\n");
+						fileContent.append(m.getValue() + "\n");
+						fileContent.append("+" + Integer.valueOf(m.getKey()) + "\n");
+						for (int i = 0; i < m.getValue().length(); i++) {
+							fileContent.append("I");
+						}
+						fileContent.append("\n");
+					}
+
+
+					byte[] strBytes = fileContent.toString().getBytes();
+					ByteBuffer buffy = ByteBuffer.allocate(strBytes.length);
+					buffy.put(strBytes);
+					buffy.flip();
+					channel_2.write(buffy);
+					print_stream_rw_reads.close();
+					channel_2.close();
+
+
+				} catch (IOException e) {
+					throw new TesException("Could not Read inputFile_fidx", e);
+				}
+			}
+		}).start();
+
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+
+
+					RandomAccessFile print_stream_read_mappinfo = new RandomAccessFile(outputDirectory + "/read.mappinginfo", "rw");
+					FileChannel channel_3 = print_stream_read_mappinfo.getChannel();
+					StringBuilder fileContent = new StringBuilder();
+					fileContent.append(printHeaders());
+
+					read_mappinginfo.forEach((readid, line) -> {
+						fileContent.append(line);
+					});
+
+
+					byte[] strBytes = fileContent.toString().getBytes();
+					ByteBuffer buffy = ByteBuffer.allocate(strBytes.length);
+					buffy.put(strBytes);
+					buffy.flip();
+					channel_3.write(buffy);
+					print_stream_read_mappinfo.close();
+					channel_3.close();
+
+
+				} catch (IOException e) {
+					throw new TesException("Could not Read inputFile_fidx", e);
+				}
+			}
+		}).start();
+
 	}
+
 }
 
