@@ -92,24 +92,19 @@ public class Transcript {
 
 
 	public String get_Chromosomal_location(int local_start, int local_stop) {
-		/*
-		 * Ausgabe nicht korrekt. Gerade eben wird a) immer nur ein Exon ausgegeben und b) es ist fuer fw und rw meistens das gleiche, sehr suspiciouos.
-		 *
-		 * */
 
-		System.out.println();
 		int[] koordinate = new int[2];
 		StringBuilder koordinates = new StringBuilder();
 		for (Exon ex : exons) {
 
-
-//			System.out.println(ex.get_ID());
-//			System.out.println(ex);
+/*
+			System.out.println(ex.get_ID());
+			System.out.println(ex);
 			System.out.println("localstart:" + local_start);
 			System.out.println("local stop:" + local_stop);
 			System.out.println(exon_to_lokalMap.get(ex.get_ID())[0]);
 			System.out.println(exon_to_lokalMap.get(ex.get_ID())[1]);
-			System.out.println();
+			System.out.println();*/
 
 
 //			Ende des Exons bereits vor Start
@@ -122,47 +117,51 @@ public class Transcript {
 			}
 
 
-			if (exon_to_lokalMap.get(ex.get_ID())[0] <= local_start) {
-				/*System.out.println("Exonlength: " + ex.getLength());
-				System.out.println("local_stop-local_start " + (local_stop - local_start));
-*/
+			if (exon_to_lokalMap.get(ex.get_ID())[0] < local_start) {
 
-				if (ex.getLength() >= (local_stop - local_start)) {
-
-
-					koordinate[0] = ex.getStart() + exon_to_lokalMap.get(ex.get_ID())[0] + (exon_to_lokalMap.get(ex.get_ID())[0] - local_start);
-
-					if (ex.getEnd() < local_stop) {
-						koordinate[1] = ex.getEnd();
-						local_start = local_start + (koordinate[1] - koordinate[0]);
-						koordinates.append(koordinate[0] + "|" + koordinate[1]);
-
-					} else {
-						koordinate[1] = koordinate[0] + (local_stop - local_start);
-						return koordinates.append(koordinate[0] + "-" + koordinate[1]).toString();
-					}
+				if (exon_to_lokalMap.get(ex.get_ID())[1] >= local_stop) {
+					koordinate[0] = ex.getStart() + local_start;
+					koordinate[1] = koordinate[0] + (local_stop - local_start);
+					koordinates.append(koordinate[0] + "-" + koordinate[1]);
+					return koordinates.toString();
 
 				} else {
-
-
-					koordinate[0] = ex.getStart() + exon_to_lokalMap.get(ex.get_ID())[0] + (exon_to_lokalMap.get(ex.get_ID())[0] - local_start);
-
-					if (ex.getEnd() < local_stop) {
-
-						koordinate[1] = ex.getEnd();
-						local_start = local_start + (koordinate[1] - koordinate[0]);
-						koordinates.append(koordinate[0] + "-" + koordinate[1] + "|");
-					} else {
-
-
-					}
-
-
-
+					koordinate[0] = ex.getStart() + local_start;
+					koordinate[1] = ex.getEnd();
+					local_start = local_start + (koordinate[1] - koordinate[0]);//schiebt local_start auf start des naechsten Exons
+					koordinates.append(koordinate[0] + "-" + koordinate[1] + "|");
 				}
+
+
+			} else {
+
+				if (exon_to_lokalMap.get(ex.get_ID())[1] > local_stop) {
+
+					koordinate[0] = ex.getStart();
+					koordinate[1] = koordinate[0] + (local_stop - local_start);
+					koordinates.append(koordinate[0] + "-" + koordinate[1]);
+					return koordinates.toString();
+
+				} else if (exon_to_lokalMap.get(ex.get_ID())[1] == local_stop) {
+
+					koordinate[0] = ex.getStart();
+					koordinate[1] = ex.getEnd();
+					koordinates.append(koordinate[0] + "-" + koordinate[1]);
+					return koordinates.toString();
+
+
+				} else if (exon_to_lokalMap.get(ex.get_ID())[1] < local_stop) {
+					koordinate[0] = ex.getStart();
+					koordinate[1] = koordinate[0] + (local_stop - local_start);
+					local_start = local_start + (koordinate[1] - koordinate[0]);
+					koordinates.append(koordinate[0] + "-" + koordinate[1] + "|");
+				}
+
+
 			}
+
+
 		}
-//		TODO: Ausgabe ist hier nicht korrekt.
 		return "WRONG WRONG WRONG WRONG";
 	}
 
