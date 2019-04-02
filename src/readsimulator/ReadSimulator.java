@@ -90,7 +90,7 @@ public class ReadSimulator implements Runnable {
 
 		calculate_core();
 
-		print();
+//		print();
 
 	}
 
@@ -101,9 +101,16 @@ public class ReadSimulator implements Runnable {
 		 *
 		 * */
 
+	/*	ThreadPoolExecutor executor= (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
+		Task task_01 = new Task() {
+			@Override
+			protected Object call() throws Exception {
+				return null;
+			}
+		};*/
 
-		new Thread(new Runnable() {
-			public void run() {
+		/*new Thread(new Runnable() {
+			public void run() {*/
 				try {
 //				Auslesen des FastaindexFiles
 					BufferedReader br = new BufferedReader(new FileReader(CommandLine_Parser.inputFile_fidx));
@@ -121,11 +128,11 @@ public class ReadSimulator implements Runnable {
 				} catch (IOException e) {
 					throw new TesException("Could not Read inputFile_fidx", e);
 				}
-			}
+	/*		}
 		}).start();
 
 		new Thread(new Runnable() {
-			public void run() {
+			public void run() {*/
 				try {
 //				Auslesen des reascount files
 					BufferedReader br = new BufferedReader(new FileReader(CommandLine_Parser.inputFile_readcounts));
@@ -155,9 +162,9 @@ public class ReadSimulator implements Runnable {
 				} catch (IOException e) {
 					throw new TesException("Fehler beim einlesen des Fastaindexfiles fidx", e);
 				}
-			}
-		}).start();
-
+		/*	}
+		}).start().join();
+*/
 		try {
 
 			BufferedReader br = new BufferedReader(new FileReader(CommandLine_Parser.inputFile_GTF));
@@ -318,16 +325,16 @@ Loop ueber alle Exons eines Transkripts
 				for (int i = readcounts.get(gen.getKey()).get(t.getTrans_id()) - 1; i >= 0; i--) {
 
 					StringBuilder rudi = new StringBuilder();
-					rand = new NormalDistribution(frlength, standardDeviation);
+//					rand = new NormalDistribution(frlength, standardDeviation);
+//TODO: do While erzeugt momentan Overheadlimitexceeded
 
-
-//					int fragmen_length = (int) Math.max(readlength, (r.nextGaussian() * standardDeviation + frlength));
-					int fragmen_length;
+					int fragmen_length = (int) Math.max(readlength, (r.nextGaussian() * standardDeviation + frlength));
+					/*int fragmen_length;
 
 					do {
 						fragmen_length = (int) rand.sample();
 					} while (fragmen_length <= readlength || fragmen_length + 1 >= t.get_Sequence().length());
-
+*/
 
 					int random_pos = r.nextInt(t.get_Sequence().length() - fragmen_length);
 					String sequence = t.get_Sequence(random_pos, fragmen_length);
@@ -534,9 +541,9 @@ Loop ueber alle Exons eines Transkripts
 
 	public void print() {
 //		TODO Set Filestreams and print to files
-
+/*
 		new Thread(new Runnable() {
-			public void run() {
+			public void run() {*/
 				try {
 
 
@@ -571,11 +578,11 @@ Loop ueber alle Exons eines Transkripts
 				} catch (IOException e) {
 					throw new TesException("Could not Read inputFile_fidx", e);
 				}
-			}
+		/*	}
 		}).start();
 
 		new Thread(new Runnable() {
-			public void run() {
+			public void run() {*/
 				try {
 
 
@@ -609,11 +616,11 @@ Loop ueber alle Exons eines Transkripts
 				} catch (IOException e) {
 					throw new TesException("Could not Read inputFile_fidx", e);
 				}
-			}
+	/*		}
 		}).start();
 
 		new Thread(new Runnable() {
-			public void run() {
+			public void run() {*/
 				try {
 
 
@@ -639,9 +646,9 @@ Loop ueber alle Exons eines Transkripts
 				} catch (IOException e) {
 					throw new TesException("Could not Read inputFile_fidx", e);
 				}
-			}
+		/*	}
 		}).start();
-
+*/
 	}
 
 }
