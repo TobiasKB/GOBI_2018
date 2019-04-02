@@ -217,6 +217,14 @@ public class ReadSimulator implements Runnable {
 			RandomAccessFile raf = new RandomAccessFile(CommandLine_Parser.inputFile_fasta, "r");
 
 
+			RandomAccessFile print_stream_fw_reads = new RandomAccessFile(outputDirectory + "/fw.fastq", "rw");
+			FileChannel channel_1 = print_stream_fw_reads.getChannel();
+			StringBuilder fileContent = new StringBuilder();
+
+			RandomAccessFile print_stream_rw_reads = new RandomAccessFile(outputDirectory + "/rw.fastq", "rw");
+			FileChannel channel_2 = print_stream_rw_reads.getChannel();
+			RandomAccessFile print_stream_read_mappinfo = new RandomAccessFile(outputDirectory + "/read.mappinginfo", "rw");
+			FileChannel channel_3 = print_stream_read_mappinfo.getChannel();
 			/*
 			 *
 			 *
@@ -412,10 +420,67 @@ public class ReadSimulator implements Runnable {
 					System.out.println();
 */
 //					System.out.println(mutated_seq_fw[0]);
-						print(read_id, rudi.toString(), mutated_seq_fw[0], mutated_seq_fw[0]);
+//						print(read_id, rudi.toString(), mutated_seq_fw[0], mutated_seq_fw[0]);
+
+
+						channel_2.position(channel_2.size());
+						channel_1.position(channel_1.size());
+
+
+						fileContent.delete(0, fileContent.length());
+
+//			for (Map.Entry<Integer, String> m : fw_reads.entrySet()) {
+
+						fileContent.append("@");
+						fileContent.append(read_id + "\n");
+						fileContent.append(mutated_seq_fw[0] + "\n");
+						fileContent.append("+" + read_id + "\n");
+						for (int z = 0; z < mutated_seq_fw[0].length(); z++) {
+							fileContent.append("I");
+						}
+						fileContent.append("\n");
+//			}
+
+
+						byte[] strBytes = fileContent.toString().getBytes();
+						ByteBuffer buffy = ByteBuffer.allocate(strBytes.length);
+						buffy.put(strBytes);
+						buffy.flip();
+						channel_1.write(buffy);
 
 //					read_mappinginfo.put(read_id, rudi.toString());
 //					read_mappinginfo.put(read_id, result_line);
+						fileContent.delete(0, fileContent.length());
+
+
+						fileContent.append("@");
+						fileContent.append(read_id + "\n");
+						fileContent.append(mutated_seq_rw[0] + "\n");
+						fileContent.append("+" + read_id + "\n");
+						for (int x = 0; x < mutated_seq_rw[0].length(); x++) {
+							fileContent.append("I");
+						}
+						fileContent.append("\n");
+
+
+						strBytes = fileContent.toString().getBytes();
+						buffy = ByteBuffer.allocate(strBytes.length);
+						buffy.put(strBytes);
+						buffy.flip();
+						channel_2.write(buffy);
+
+						fileContent.delete(0, fileContent.length());
+						channel_3.position(channel_3.size());
+
+						fileContent.append(rudi.toString());
+
+
+						strBytes = fileContent.toString().getBytes();
+						buffy = ByteBuffer.allocate(strBytes.length);
+						buffy.put(strBytes);
+						buffy.flip();
+						channel_3.write(buffy);
+
 
 						read_id++;
 
@@ -423,7 +488,6 @@ public class ReadSimulator implements Runnable {
 					}
 
 
-//					calculate_core(t,gen);
 /*
 					System.out.println();
 					System.out.println(stringBuilder.toString());
@@ -433,6 +497,14 @@ public class ReadSimulator implements Runnable {
 
 				}
 			}
+
+
+			print_stream_fw_reads.close();
+			channel_1.close();
+			print_stream_rw_reads.close();
+			channel_2.close();
+			print_stream_read_mappinfo.close();
+			channel_3.close();
 
 		} catch (IOException e) {
 			throw new TesException("Failed to read Fasta File @RandomFileAccess", e);
@@ -484,9 +556,9 @@ public class ReadSimulator implements Runnable {
 
 //					fragmen_length = (int) Math.max(readlength, (r.nextGaussian() * standardDeviation + frlength));
 
-					do {
-						fragmen_length = (int) rand.sample();
-					} while (fragmen_length <= readlength || fragmen_length + 1 >= t.get_Sequence().length());
+			do {
+				fragmen_length = (int) rand.sample();
+			} while (fragmen_length <= readlength || fragmen_length + 1 >= t.get_Sequence().length());
 
 			random_pos = r.nextInt(t.get_Sequence().length() - fragmen_length);
 			sequence = t.get_Sequence(random_pos, fragmen_length);
@@ -503,14 +575,14 @@ public class ReadSimulator implements Runnable {
 //					fw_reads.put(read_id, mutated_seq_fw[0]);
 //					rw_reads.put(read_id, mutated_seq_rw[0]);
 
-					/*Auf Transkript*/
+			/*Auf Transkript*/
 			t_fw_regveg[0] = random_pos;
 			t_fw_regveg[1] = random_pos + readlength;
 
 			t_rw_regveg[0] = random_pos + fragmen_length - readlength;
 			t_rw_regveg[1] = random_pos + fragmen_length;
 
-					/*Auf Gene/Chromosom*/
+			/*Auf Gene/Chromosom*/
 
 			fw_regvec = t.get_Chromosomal_location(random_pos, random_pos + readlength);
 			rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length);
@@ -521,46 +593,46 @@ public class ReadSimulator implements Runnable {
 				/*	String result_line = read_id + "\t" + gen.getValue().getchr() +
 							"\t" + gen.getKey() + "\t" + t.getTrans_id() + "\t" + t_fw_regveg[0] + "-" + t_fw_regveg[1] +
 							"\t" + t_rw_regveg[0] + "-" + t_rw_regveg[1] + "\t" + mutated_seq_fw[1] + "\t" + mutated_seq_rw[1] + "\n";*/
-					rudi.append(read_id + "\t");
+			rudi.append(read_id + "\t");
 			rudi.append(gen.getchr() + "\t");
 			rudi.append(gen.getID() + "\t");
-					rudi.append(t.getTrans_id() + "\t");
-					rudi.append(t_fw_regveg[0] + "-" + t_fw_regveg[1] + "\t");
-					rudi.append(t_rw_regveg[0] + "-" + t_rw_regveg[1] + "\t");
-					rudi.append(fw_regvec + "\t");
-					rudi.append(rw_regvec + "\t");
-					rudi.append(mutated_seq_fw[1] + "\t");
-					rudi.append(mutated_seq_rw[1] + "\t");
-					rudi.append("\n");
+			rudi.append(t.getTrans_id() + "\t");
+			rudi.append(t_fw_regveg[0] + "-" + t_fw_regveg[1] + "\t");
+			rudi.append(t_rw_regveg[0] + "-" + t_rw_regveg[1] + "\t");
+			rudi.append(fw_regvec + "\t");
+			rudi.append(rw_regvec + "\t");
+			rudi.append(mutated_seq_fw[1] + "\t");
+			rudi.append(mutated_seq_rw[1] + "\t");
+			rudi.append("\n");
 
 
-					System.out.println("Readlength: " + readlength);
-					System.out.println("Transcript_id: " + t.getTrans_id());
-					System.out.println("Sequence Length: " + t.get_Sequence().length());
-					System.out.println("Transcript Length: " + t.get_length());
-					System.out.println("RandomPos: " + random_pos);
-					System.out.println("fragment_length: " + fragmen_length);
-					System.out.println("Sequence: \n" + sequence);
-					System.out.println("forward read:\n" + fw);
-					System.out.println("forward read: Mutated \n" + mutated_seq_fw[0]);
-					System.out.println("backward read:\n" + rw);
-					System.out.println("backward read: Mutated \n" + mutated_seq_rw[0]);
-					System.out.println();
-					System.out.println("read_id " + read_id);
-					System.out.println("fw_mutations_pointer: " + fw_mutations_pointer.get(read_id));
-					System.out.println("rw_mutations_pointer: " + rw_mutations_pointer.get(read_id));
-					System.out.println("fw_regvec: " + fw_regvec);
-					System.out.println("rw_regvec: " + rw_regvec);
-					System.out.println();
+			System.out.println("Readlength: " + readlength);
+			System.out.println("Transcript_id: " + t.getTrans_id());
+			System.out.println("Sequence Length: " + t.get_Sequence().length());
+			System.out.println("Transcript Length: " + t.get_length());
+			System.out.println("RandomPos: " + random_pos);
+			System.out.println("fragment_length: " + fragmen_length);
+			System.out.println("Sequence: \n" + sequence);
+			System.out.println("forward read:\n" + fw);
+			System.out.println("forward read: Mutated \n" + mutated_seq_fw[0]);
+			System.out.println("backward read:\n" + rw);
+			System.out.println("backward read: Mutated \n" + mutated_seq_rw[0]);
+			System.out.println();
+			System.out.println("read_id " + read_id);
+			System.out.println("fw_mutations_pointer: " + fw_mutations_pointer.get(read_id));
+			System.out.println("rw_mutations_pointer: " + rw_mutations_pointer.get(read_id));
+			System.out.println("fw_regvec: " + fw_regvec);
+			System.out.println("rw_regvec: " + rw_regvec);
+			System.out.println();
 			print(read_id, rudi.toString(), mutated_seq_fw[0], mutated_seq_fw[0]);
 
 //					read_mappinginfo.put(read_id, rudi.toString());
 //					read_mappinginfo.put(read_id, result_line);
 
-					read_id++;
+			read_id++;
 
 
-				}
+		}
 		/*	}
 		}*/
 	}
@@ -765,7 +837,7 @@ public class ReadSimulator implements Runnable {
 			fileContent.append(read_id + "\n");
 			fileContent.append(rw_sequence + "\n");
 			fileContent.append("+" + read_id + "\n");
-			for (int i = 0; i < rw_sequence.length(); i++) {
+			for (int x = 0; x < rw_sequence.length(); x++) {
 				fileContent.append("I");
 			}
 			fileContent.append("\n");
