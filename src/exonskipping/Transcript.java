@@ -77,7 +77,7 @@ public class Transcript {
 		if (stop > this.end) {
 			this.end = stop;
 		}
-		exon_to_lokalMap.put(identifier, new int[]{this.length_exons, length_exons + stop - start - 1});
+		exon_to_lokalMap.put(identifier, new int[]{this.length_exons, length_exons + stop - start});
 		/*System.out.println(this.length_exons);
 		System.out.println(stop-start);
 
@@ -97,8 +97,7 @@ public class Transcript {
 		int[] koordinate = new int[2];
 		StringBuilder koordinates = new StringBuilder();
 		for (Exon ex : exons) {
-
-/*
+			/*System.out.println(exons);
 			System.out.println(ex.get_ID());
 			System.out.println(ex);
 			System.out.println("localstart:" + local_start);
@@ -113,16 +112,16 @@ public class Transcript {
 				continue;
 			}
 //			Ende lokal bereits vor Exon Anfang
-			if (exon_to_lokalMap.get(ex.get_ID())[0] > local_stop) {
+			if (exon_to_lokalMap.get(ex.get_ID())[0] > local_stop - 1) {
 				return koordinates.toString();
 			}
 
 
 			if (exon_to_lokalMap.get(ex.get_ID())[0] < local_start) {
 
-				if (exon_to_lokalMap.get(ex.get_ID())[1] >= local_stop) {
+				if (exon_to_lokalMap.get(ex.get_ID())[1] >= local_stop - 1) {
 					koordinate[0] = ex.getStart() + local_start;
-					koordinate[1] = koordinate[0] + (local_stop - local_start);
+					koordinate[1] = koordinate[0] + (local_stop - 1 - local_start);
 					koordinates.append(koordinate[0] + "-" + koordinate[1]);
 					return koordinates.toString();
 
@@ -136,14 +135,14 @@ public class Transcript {
 
 			} else {
 
-				if (exon_to_lokalMap.get(ex.get_ID())[1] > local_stop) {
+				if (exon_to_lokalMap.get(ex.get_ID())[1] > local_stop - 1) {
 
 					koordinate[0] = ex.getStart();
-					koordinate[1] = koordinate[0] + (local_stop - local_start);
+					koordinate[1] = koordinate[0] + (local_stop - 1 - local_start);
 					koordinates.append(koordinate[0] + "-" + koordinate[1]);
 					return koordinates.toString();
 
-				} else if (exon_to_lokalMap.get(ex.get_ID())[1] == local_stop) {
+				} else if (exon_to_lokalMap.get(ex.get_ID())[1] == local_stop - 1) {
 
 					koordinate[0] = ex.getStart();
 					koordinate[1] = ex.getEnd();
@@ -151,9 +150,9 @@ public class Transcript {
 					return koordinates.toString();
 
 
-				} else if (exon_to_lokalMap.get(ex.get_ID())[1] < local_stop) {
+				} else if (exon_to_lokalMap.get(ex.get_ID())[1] < local_stop - 1) {
 					koordinate[0] = ex.getStart();
-					koordinate[1] = koordinate[0] + (local_stop - local_start);
+					koordinate[1] = koordinate[0] + (local_stop - 1 - local_start);
 					local_start = local_start + (koordinate[1] - koordinate[0]);
 					koordinates.append(koordinate[0] + "-" + koordinate[1] + "|");
 				}

@@ -4,6 +4,8 @@ import utils.CommandLine_Parser;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
+import static utils.CommandLine_Parser.outputFile;
+
 /**
  * @author TKB
  */
@@ -13,8 +15,8 @@ public class Runner {
 		CommandLine_Parser.parseParameters(args);
 
 		try {
-			PrintStream fileout = new PrintStream(CommandLine_Parser.outputFile);
-			System.setOut(fileout);
+			PrintStream fileout = new PrintStream(outputFile);
+//			System.setOut(fileout);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}

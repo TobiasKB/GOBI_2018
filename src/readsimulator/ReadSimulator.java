@@ -15,7 +15,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -88,13 +87,14 @@ public class ReadSimulator implements Runnable {
 
 		getSequences();
 
-		calculate_core();
+//		calculate_core();
 
 //		print();
 
 	}
 
 	private void readFiles() {
+//		TODO: Stop everything until threads are done reading
 		/*
 		 * Already done by FileReader: get Paths and inputParameters
 		 * Ein Thread liest das IndexFile , einer den Rest//
@@ -111,57 +111,57 @@ public class ReadSimulator implements Runnable {
 
 		/*new Thread(new Runnable() {
 			public void run() {*/
-				try {
+		try {
 //				Auslesen des FastaindexFiles
-					BufferedReader br = new BufferedReader(new FileReader(CommandLine_Parser.inputFile_fidx));
-					String line = br.readLine();
-					while (line != null) {
-						String[] splitline = line.split("\t");
-						if (!fasta_annotation.containsKey(splitline[0])) {
-							fasta_annotation.put(splitline[0], new long[]{Long.parseLong(splitline[1]), Long.parseLong(splitline[2]), Long.parseLong(splitline[3]), Long.parseLong(splitline[4])});
-						}
-
-						line = br.readLine();
-					}
-					br.close();
-
-				} catch (IOException e) {
-					throw new TesException("Could not Read inputFile_fidx", e);
+			BufferedReader br = new BufferedReader(new FileReader(CommandLine_Parser.inputFile_fidx));
+			String line = br.readLine();
+			while (line != null) {
+				String[] splitline = line.split("\t");
+				if (!fasta_annotation.containsKey(splitline[0])) {
+					fasta_annotation.put(splitline[0], new long[]{Long.parseLong(splitline[1]), Long.parseLong(splitline[2]), Long.parseLong(splitline[3]), Long.parseLong(splitline[4])});
 				}
+
+				line = br.readLine();
+			}
+			br.close();
+
+		} catch (IOException e) {
+			throw new TesException("Could not Read inputFile_fidx", e);
+		}
 	/*		}
 		}).start();
 
 		new Thread(new Runnable() {
 			public void run() {*/
-				try {
-//				Auslesen des reascount files
-					BufferedReader br = new BufferedReader(new FileReader(CommandLine_Parser.inputFile_readcounts));
-					String line = br.readLine();
-					while (line != null) {
-						if (line.contains("gene")) {
-							line = br.readLine();
-							continue;
-						}
-						String[] splitline = line.split("\t");
-
-						if (!readcounts.containsKey(splitline[0])) {
-
-							HashMap h = new HashMap<String, Integer>();
-							h.put(splitline[1], Integer.valueOf(splitline[2]));
-
-							readcounts.put(splitline[0], h);
-						} else {
-							if (readcounts.get(splitline[0]).containsKey(splitline[1])) {
-								readcounts.get(splitline[0]).put(splitline[1], readcounts.get(splitline[0]).get(splitline[1] + Integer.valueOf(splitline[2])));
-							} else {
-								readcounts.get(splitline[0]).put(splitline[1], Integer.valueOf(splitline[2]));
-							}
-						}
-						line = br.readLine();
-					}
-				} catch (IOException e) {
-					throw new TesException("Fehler beim einlesen des Fastaindexfiles fidx", e);
+		try {
+//				Auslesen des readcount files
+			BufferedReader br = new BufferedReader(new FileReader(CommandLine_Parser.inputFile_readcounts));
+			String line = br.readLine();
+			while (line != null) {
+				if (line.contains("gene")) {
+					line = br.readLine();
+					continue;
 				}
+				String[] splitline = line.split("\t");
+
+				if (!readcounts.containsKey(splitline[0])) {
+
+					HashMap h = new HashMap<String, Integer>();
+					h.put(splitline[1], Integer.valueOf(splitline[2]));
+
+					readcounts.put(splitline[0], h);
+				} else {
+					if (readcounts.get(splitline[0]).containsKey(splitline[1])) {
+						readcounts.get(splitline[0]).put(splitline[1], readcounts.get(splitline[0]).get(splitline[1] + Integer.valueOf(splitline[2])));
+					} else {
+						readcounts.get(splitline[0]).put(splitline[1], Integer.valueOf(splitline[2]));
+					}
+				}
+				line = br.readLine();
+			}
+		} catch (IOException e) {
+			throw new TesException("Fehler beim einlesen des Fastaindexfiles fidx", e);
+		}
 		/*	}
 		}).start().join();
 */
@@ -216,39 +216,64 @@ public class ReadSimulator implements Runnable {
 
 			RandomAccessFile raf = new RandomAccessFile(CommandLine_Parser.inputFile_fasta, "r");
 
-			for (Map.Entry<String, Gen> gen : target_genes.entrySet()) {
 
-/*
-				System.out.println((gen.getValue().getStart()));
-				System.out.println((gen.getValue().getEnd()));
-*/
+			/*
+			 *
+			 *
+			 * Berechnen der FL (Fragment Length) mit Hilfe der gegebenen Parameter  (Standart derivate) und frlength.
+			 * waehle eine zufaellige Position auf der Sequenz des Transkripts , die von 0 bis Transkript.length-FL liegt.
+			 * Durch Readlength Parameter zwei Sequenzen generieren, jede so lang wie die Readlength. Diese koennen auch ueberlappen, muessen aber nicht.
+			 * Die erste wird ab der Position des zufaelligen Pointer gelesen, die zweite vom Ende des Transkripts, dabei wird das reverse komplement gelesen, also fuer jede Base muss die komplementaere Base generiert werden.
+			 * Anschliessend muessen fuer beide Sequenzen Mutationen berechnet werden.
+			 * Die Positionen der Sequencen muessen anschliessend gespeichert werden, siehe hierzu ausgabe Files .
+			 * Die Positionen muessen einmal in Genomische Daten umgerechnet werden. (da vorher nur Position relativ auf dem jeweiligen Chromosom angegeben wird).
+			 * mapping.info enthaelt:
+			 * ReadID   Chr Gene    Transkript  Transkriptpos.  t_fw_regvec fw_regvev   t_rw_regvec rw-regveg fw_mutations    rw_mutations
+			 *readid	chr	gene	transcript	t_fw_regvec	t_rw_regvec	fw_regvec	rw_regvec	fw_mut	rw_mut
+			 *
+			 * Zu beachten: Sollte die FL kleiner als die Readlength sein, erneut berechnen.
+			 * Simuliere Mutationen: Auslagern in extra Methode
+			 *
+			 * */
+			int read_id = 0;
+			Random r = new Random();
+			StringBuilder rudi = new StringBuilder();
 
-				gen.getValue().get_Transcripts().forEach((transcript_id, t) -> {
+
+//			for (Map.Entry<String, Gen> gen : target_genes.entrySet()) {
+			for (Gen gen : target_genes.values()) {
+
+				String fw, rw, sequence, fw_regvec, rw_regvec;
+				int fragmen_length, random_pos;
+				String[] mutated_seq_fw;
+				String[] mutated_seq_rw;
+				int[] t_fw_regveg = new int[2];
+				int[] t_rw_regveg = new int[2];
+				for (Transcript t : gen.get_Transcripts().values()) {
 					StringBuilder stringBuilder = new StringBuilder();
-/*
-Loop ueber alle Exons eines Transkripts
-*/
+
+
 					t.getExons().forEach(exon -> {
 
 						try {
 
 //							raf.seek((fasta_annotation.get(gen.getValue().getchr())[1] + (exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2])) + exon.getStart());
+							/*Calculates the correct location of the sequence and saves one sequences per transcript */
+
+							long lines_in_entry = (exon.getStart() - 1) / fasta_annotation.get(gen.getchr())[2];
+							long last_line_length = exon.getStart() - (lines_in_entry * fasta_annotation.get(gen.getchr())[2]);
+							long offset = lines_in_entry * fasta_annotation.get(gen.getchr())[3] + last_line_length;
+
+							raf.seek(fasta_annotation.get(gen.getchr())[1] + offset - 1);
 
 
-							long lines_in_entry = (exon.getStart() - 1) / fasta_annotation.get(gen.getValue().getchr())[2];
-							long last_line_length = exon.getStart() - (lines_in_entry * fasta_annotation.get(gen.getValue().getchr())[2]);
-							long offset = lines_in_entry * fasta_annotation.get(gen.getValue().getchr())[3] + last_line_length;
-
-							raf.seek(fasta_annotation.get(gen.getValue().getchr())[1] + offset - 1);
-
-
-							long lines_in_1 = (int) Math.floor(exon.getEnd() / fasta_annotation.get(gen.getValue().getchr())[2]);
-							long lines_in_2 = (int) Math.floor(exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2]);
+							long lines_in_1 = (int) Math.floor(exon.getEnd() / fasta_annotation.get(gen.getchr())[2]);
+							long lines_in_2 = (int) Math.floor(exon.getStart() / fasta_annotation.get(gen.getchr())[2]);
 
 							long lines_for_real = lines_in_1 - lines_in_2;
 
-							long last_line = (exon.getEnd() - exon.getStart()) - (lines_for_real * fasta_annotation.get(gen.getValue().getchr())[2]);
-							long off = lines_for_real * fasta_annotation.get(gen.getValue().getchr())[3] + last_line;
+							long last_line = (exon.getEnd() - exon.getStart()) - (lines_for_real * fasta_annotation.get(gen.getchr())[2]);
+							long off = lines_for_real * fasta_annotation.get(gen.getchr())[3] + last_line;
 
 
 						/*	System.out.println(t.getTrans_id());
@@ -265,13 +290,12 @@ Loop ueber alle Exons eines Transkripts
 
 
 							byte[] bytey = new byte[length];
-
+//ERROR : TODO: Falsche Laenge der Sequenz, Sequenz laenger als Transcript (Exons)
 
 							raf.readFully(bytey, 0, length);
 							String temp = new String(bytey, StandardCharsets.UTF_8).replaceAll("\n", "");
 							stringBuilder.append(temp);
 
-//TODO: Optimierung: Alles in einer for loop loesen.(generate reads and mutation)
 						} catch (IOException e) {
 							throw new TesException("Error Seeking correnct Line in FastaFile", e);
 						}
@@ -279,98 +303,92 @@ Loop ueber alle Exons eines Transkripts
 
 					t.add_Sequence(stringBuilder.toString());
 
+
+
 /*
-					System.out.println();
-					System.out.println(stringBuilder.toString());
-					System.out.println();
-					System.out.println(t.get_Sequence());
-*/
-
-				});
-			}
-
-		} catch (IOException e) {
-			throw new TesException("Failed to read Fasta File @RandomFileAccess", e);
-		}
-
-	}
-
-	private void calculate_core() {
-
-		/*
-		 *
-		 *
-		 * Berechnen der FL (Fragment Length) mit Hilfe der gegebenen Parameter  (Standart derivate) und frlength.
-		 * waehle eine zufaellige Position auf der Sequenz des Transkripts , die von 0 bis Transkript.length-FL liegt.
-		 * Durch Readlength Parameter zwei Sequenzen generieren, jede so lang wie die Readlength. Diese koennen auch ueberlappen, muessen aber nicht.
-		 * Die erste wird ab der Position des zufaelligen Pointer gelesen, die zweite vom Ende des Transkripts, dabei wird das reverse komplement gelesen, also fuer jede Base muss die komplementaere Base generiert werden.
-		 * Anschliessend muessen fuer beide Sequenzen Mutationen berechnet werden.
-		 * Die Positionen der Sequencen muessen anschliessend gespeichert werden, siehe hierzu ausgabe Files .
-		 * Die Positionen muessen einmal in Genomische Daten umgerechnet werden. (da vorher nur Position relativ auf dem jeweiligen Chromosom angegeben wird).
-		 * mapping.info enthaelt:
-		 * ReadID   Chr Gene    Transkript  Transkriptpos.  t_fw_regvec fw_regvev   t_rw_regvec rw-regveg fw_mutations    rw_mutations
-		 *readid	chr	gene	transcript	t_fw_regvec	t_rw_regvec	fw_regvec	rw_regvec	fw_mut	rw_mut
-		 *
-		 * Zu beachten: Sollte die FL kleiner als die Readlength sein, erneut berechnen.
-		 * Simuliere Mutationen: Auslagern in extra Methode
-		 *
-		 * */
-		int read_id = 0;
-		Random r = new Random();
 
 		for (Map.Entry<String, Gen> gen : target_genes.entrySet()) {
 
 			for (Transcript t : gen.getValue().get_Transcripts().values()) {
-
-				for (int i = readcounts.get(gen.getKey()).get(t.getTrans_id()) - 1; i >= 0; i--) {
-
-					StringBuilder rudi = new StringBuilder();
-//					rand = new NormalDistribution(frlength, standardDeviation);
-//TODO: do While erzeugt momentan Overheadlimitexceeded
-
-					int fragmen_length = (int) Math.max(readlength, (r.nextGaussian() * standardDeviation + frlength));
-					/*int fragmen_length;
-
-					do {
-						fragmen_length = (int) rand.sample();
-					} while (fragmen_length <= readlength || fragmen_length + 1 >= t.get_Sequence().length());
 */
 
-					int random_pos = r.nextInt(t.get_Sequence().length() - fragmen_length);
-					String sequence = t.get_Sequence(random_pos, fragmen_length);
+					for (int i = readcounts.get(gen.getID()).get(t.getTrans_id()) - 1; i >= 0; i--) {
+
+						rudi.delete(0, rudi.length());
+
+						rand = new NormalDistribution(frlength, standardDeviation);
+
+//					fragmen_length = (int) Math.max(readlength, (r.nextGaussian() * standardDeviation + frlength));
+
+						do {
+							fragmen_length = (int) rand.sample();
+						} while (fragmen_length <= readlength || fragmen_length + 1 >= t.get_Sequence().length());
+
+//TODO: Fehler: Get Sequence Length ; Seq. ist zu lang fuer Exons
+						random_pos = r.nextInt(t.get_Sequence().length() - fragmen_length);
+						sequence = t.get_Sequence(random_pos, fragmen_length);
 
 
-					String fw = sequence.substring(0, readlength);
-					String rw = reverse_komplement_calc(sequence.substring(sequence.length() - readlength, sequence.length()));
+						fw = sequence.substring(0, readlength);
+						rw = reverse_komplement_calc(sequence.substring(sequence.length() - readlength, sequence.length()));
 
-					String[] mutated_seq_fw = mutation_generator(read_id, fw);
-					String[] mutated_seq_rw = mutation_generator(read_id, rw);
+						mutated_seq_fw = mutation_generator(read_id, fw);
+						mutated_seq_rw = mutation_generator(read_id, rw);
+//HashMaps produce Overload
+//					fw_mutations_pointer.put(read_id, mutated_seq_fw[1]);
+//					rw_mutations_pointer.put(read_id, mutated_seq_rw[1]);
+//					fw_reads.put(read_id, mutated_seq_fw[0]);
+//					rw_reads.put(read_id, mutated_seq_rw[0]);
 
-					fw_mutations_pointer.put(read_id, mutated_seq_fw[1]);
-					rw_mutations_pointer.put(read_id, mutated_seq_rw[1]);
+						/*Auf Transkript*/
+						t_fw_regveg[0] = random_pos;
+						t_fw_regveg[1] = random_pos + readlength;
 
-					fw_reads.put(read_id, mutated_seq_fw[0]);
-					rw_reads.put(read_id, mutated_seq_rw[0]);
+						t_rw_regveg[0] = random_pos + fragmen_length - readlength;
+						t_rw_regveg[1] = random_pos + fragmen_length;
 
-					/*Auf Transkript*/
-					int[] t_fw_regveg = {random_pos, random_pos + readlength};
-					int[] t_rw_regveg = {random_pos + fragmen_length - readlength, random_pos + fragmen_length};
+						/*Auf Gene/Chromosom*/
 
-					/*Auf Gene/Chromosom*/
-					String fw_regvec = t.get_Chromosomal_location(random_pos, random_pos + readlength);
-					String rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length);
+						fw_regvec = t.get_Chromosomal_location(random_pos, random_pos + readlength);
+						rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length);
 
-					rudi.append(read_id + "\t");
-					rudi.append(gen.getValue().getchr() + "\t");
-					rudi.append(gen.getKey() + "\t");
-					rudi.append(t.getTrans_id() + "\t");
-					rudi.append(t_fw_regveg[0] + "-" + t_fw_regveg[1] + "\t");
-					rudi.append(t_rw_regveg[0] + "-" + t_rw_regveg[1] + "\t");
-					rudi.append(fw_regvec + "\t");
-					rudi.append(rw_regvec + "\t");
-					rudi.append(mutated_seq_fw[1] + "\t");
-					rudi.append(mutated_seq_rw[1] + "\t");
-					rudi.append("\n");
+
+					/*	System.out.println("Readlength: " + readlength);
+						System.out.println("Transcript_id: " + t.getTrans_id());
+						System.out.println("Sequence Length: " + t.get_Sequence().length());
+						System.out.println("Transcript Length: " + t.get_length());
+						System.out.println("RandomPos: " + random_pos);
+						System.out.println("fragment_length: " + fragmen_length);
+						System.out.println("Sequence: \n" + sequence);
+						System.out.println("forward read:\n" + fw);
+						System.out.println("forward read: Mutated \n" + mutated_seq_fw[0]);
+						System.out.println("backward read:\n" + rw);
+						System.out.println("backward read: Mutated \n" + mutated_seq_rw[0]);
+						System.out.println();
+						System.out.println("read_id " + read_id);
+						System.out.println("fw_mutations_pointer: " + fw_mutations_pointer.get(read_id));
+						System.out.println("rw_mutations_pointer: " + rw_mutations_pointer.get(read_id));
+						System.out.println("fw_regvec: " + fw_regvec);
+						System.out.println("rw_regvec: " + rw_regvec);
+						System.out.println();
+*/
+						//rudi causes too much Overhead. Kill rudi. You must.
+
+
+				/*	String result_line = read_id + "\t" + gen.getValue().getchr() +
+							"\t" + gen.getKey() + "\t" + t.getTrans_id() + "\t" + t_fw_regveg[0] + "-" + t_fw_regveg[1] +
+							"\t" + t_rw_regveg[0] + "-" + t_rw_regveg[1] + "\t" + mutated_seq_fw[1] + "\t" + mutated_seq_rw[1] + "\n";*/
+						rudi.append(read_id + "\t");
+						rudi.append(gen.getchr() + "\t");
+						rudi.append(gen.getID() + "\t");
+						rudi.append(t.getTrans_id() + "\t");
+						rudi.append(t_fw_regveg[0] + "-" + t_fw_regveg[1] + "\t");
+						rudi.append(t_rw_regveg[0] + "-" + t_rw_regveg[1] + "\t");
+						rudi.append(fw_regvec + "\t");
+						rudi.append(rw_regvec + "\t");
+						rudi.append(mutated_seq_fw[1] + "\t");
+						rudi.append(mutated_seq_rw[1] + "\t");
+						rudi.append("\n");
 
 /*
 
@@ -393,16 +411,158 @@ Loop ueber alle Exons eines Transkripts
 					System.out.println("rw_regvec: " + rw_regvec);
 					System.out.println();
 */
+//					System.out.println(mutated_seq_fw[0]);
+						print(read_id, rudi.toString(), mutated_seq_fw[0], mutated_seq_fw[0]);
+
+//					read_mappinginfo.put(read_id, rudi.toString());
+//					read_mappinginfo.put(read_id, result_line);
+
+						read_id++;
 
 
-					read_mappinginfo.put(read_id, rudi.toString());
+					}
+
+
+//					calculate_core(t,gen);
+/*
+					System.out.println();
+					System.out.println(stringBuilder.toString());
+					System.out.println();
+					System.out.println(t.get_Sequence());
+*/
+
+				}
+			}
+
+		} catch (IOException e) {
+			throw new TesException("Failed to read Fasta File @RandomFileAccess", e);
+		}
+
+	}
+
+	private void calculate_core(Transcript t, Gen gen) {
+
+		/*
+		 *
+		 *
+		 * Berechnen der FL (Fragment Length) mit Hilfe der gegebenen Parameter  (Standart derivate) und frlength.
+		 * waehle eine zufaellige Position auf der Sequenz des Transkripts , die von 0 bis Transkript.length-FL liegt.
+		 * Durch Readlength Parameter zwei Sequenzen generieren, jede so lang wie die Readlength. Diese koennen auch ueberlappen, muessen aber nicht.
+		 * Die erste wird ab der Position des zufaelligen Pointer gelesen, die zweite vom Ende des Transkripts, dabei wird das reverse komplement gelesen, also fuer jede Base muss die komplementaere Base generiert werden.
+		 * Anschliessend muessen fuer beide Sequenzen Mutationen berechnet werden.
+		 * Die Positionen der Sequencen muessen anschliessend gespeichert werden, siehe hierzu ausgabe Files .
+		 * Die Positionen muessen einmal in Genomische Daten umgerechnet werden. (da vorher nur Position relativ auf dem jeweiligen Chromosom angegeben wird).
+		 * mapping.info enthaelt:
+		 * ReadID   Chr Gene    Transkript  Transkriptpos.  t_fw_regvec fw_regvev   t_rw_regvec rw-regveg fw_mutations    rw_mutations
+		 *readid	chr	gene	transcript	t_fw_regvec	t_rw_regvec	fw_regvec	rw_regvec	fw_mut	rw_mut
+		 *
+		 * Zu beachten: Sollte die FL kleiner als die Readlength sein, erneut berechnen.
+		 * Simuliere Mutationen: Auslagern in extra Methode
+		 *
+		 * */
+		int read_id = 0;
+		Random r = new Random();
+		StringBuilder rudi = new StringBuilder();
+		String fw, rw, sequence, fw_regvec, rw_regvec;
+		int fragmen_length, random_pos;
+		String[] mutated_seq_fw;
+		String[] mutated_seq_rw;
+		int[] t_fw_regveg = new int[2];
+		int[] t_rw_regveg = new int[2];
+/*
+
+		for (Map.Entry<String, Gen> gen : target_genes.entrySet()) {
+
+			for (Transcript t : gen.getValue().get_Transcripts().values()) {
+*/
+
+		for (int i = readcounts.get(gen.getID()).get(t.getTrans_id()) - 1; i >= 0; i--) {
+
+			rudi.delete(0, rudi.length());
+
+			rand = new NormalDistribution(frlength, standardDeviation);
+
+//					fragmen_length = (int) Math.max(readlength, (r.nextGaussian() * standardDeviation + frlength));
+
+					do {
+						fragmen_length = (int) rand.sample();
+					} while (fragmen_length <= readlength || fragmen_length + 1 >= t.get_Sequence().length());
+
+			random_pos = r.nextInt(t.get_Sequence().length() - fragmen_length);
+			sequence = t.get_Sequence(random_pos, fragmen_length);
+
+
+			fw = sequence.substring(0, readlength);
+			rw = reverse_komplement_calc(sequence.substring(sequence.length() - readlength, sequence.length()));
+
+			mutated_seq_fw = mutation_generator(read_id, fw);
+			mutated_seq_rw = mutation_generator(read_id, rw);
+//HashMaps produce Overload
+//					fw_mutations_pointer.put(read_id, mutated_seq_fw[1]);
+//					rw_mutations_pointer.put(read_id, mutated_seq_rw[1]);
+//					fw_reads.put(read_id, mutated_seq_fw[0]);
+//					rw_reads.put(read_id, mutated_seq_rw[0]);
+
+					/*Auf Transkript*/
+			t_fw_regveg[0] = random_pos;
+			t_fw_regveg[1] = random_pos + readlength;
+
+			t_rw_regveg[0] = random_pos + fragmen_length - readlength;
+			t_rw_regveg[1] = random_pos + fragmen_length;
+
+					/*Auf Gene/Chromosom*/
+
+			fw_regvec = t.get_Chromosomal_location(random_pos, random_pos + readlength);
+			rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length);
+
+			//rudi causes too much Overhead. Kill rudi. You must.
+
+
+				/*	String result_line = read_id + "\t" + gen.getValue().getchr() +
+							"\t" + gen.getKey() + "\t" + t.getTrans_id() + "\t" + t_fw_regveg[0] + "-" + t_fw_regveg[1] +
+							"\t" + t_rw_regveg[0] + "-" + t_rw_regveg[1] + "\t" + mutated_seq_fw[1] + "\t" + mutated_seq_rw[1] + "\n";*/
+					rudi.append(read_id + "\t");
+			rudi.append(gen.getchr() + "\t");
+			rudi.append(gen.getID() + "\t");
+					rudi.append(t.getTrans_id() + "\t");
+					rudi.append(t_fw_regveg[0] + "-" + t_fw_regveg[1] + "\t");
+					rudi.append(t_rw_regveg[0] + "-" + t_rw_regveg[1] + "\t");
+					rudi.append(fw_regvec + "\t");
+					rudi.append(rw_regvec + "\t");
+					rudi.append(mutated_seq_fw[1] + "\t");
+					rudi.append(mutated_seq_rw[1] + "\t");
+					rudi.append("\n");
+
+
+					System.out.println("Readlength: " + readlength);
+					System.out.println("Transcript_id: " + t.getTrans_id());
+					System.out.println("Sequence Length: " + t.get_Sequence().length());
+					System.out.println("Transcript Length: " + t.get_length());
+					System.out.println("RandomPos: " + random_pos);
+					System.out.println("fragment_length: " + fragmen_length);
+					System.out.println("Sequence: \n" + sequence);
+					System.out.println("forward read:\n" + fw);
+					System.out.println("forward read: Mutated \n" + mutated_seq_fw[0]);
+					System.out.println("backward read:\n" + rw);
+					System.out.println("backward read: Mutated \n" + mutated_seq_rw[0]);
+					System.out.println();
+					System.out.println("read_id " + read_id);
+					System.out.println("fw_mutations_pointer: " + fw_mutations_pointer.get(read_id));
+					System.out.println("rw_mutations_pointer: " + rw_mutations_pointer.get(read_id));
+					System.out.println("fw_regvec: " + fw_regvec);
+					System.out.println("rw_regvec: " + rw_regvec);
+					System.out.println();
+			print(read_id, rudi.toString(), mutated_seq_fw[0], mutated_seq_fw[0]);
+
+//					read_mappinginfo.put(read_id, rudi.toString());
+//					read_mappinginfo.put(read_id, result_line);
 
 					read_id++;
 
 
 				}
-			}
-		}
+		/*	}
+		}*/
 	}
 
 	private String[] mutation_generator(int event_id, String sequence_neutral) {
@@ -531,6 +691,7 @@ Loop ueber alle Exons eines Transkripts
 		 * To read.mappinginfo:
 		 * */
 		return "readid\tchr\tgene\ttranscript\tt_fw_regvec\tt_rw_regcev\tfw_regvec\trw_regveg\tfw_mut\trw_mut\n";
+//		TODO: Print in read.mappinginfo
 
 		/*
 		 * to rw und fw Fasta: extra ausgabe. siehe print()
@@ -539,113 +700,123 @@ Loop ueber alle Exons eines Transkripts
 	}
 
 
-	public void print() {
-//		TODO Set Filestreams and print to files
+	public void print(int read_id, String read_mappinginfo, String fw_sequence, String rw_sequence) {
+//		TODO: Concant to eof, delete loops, print info directly
 /*
 		new Thread(new Runnable() {
 			public void run() {*/
-				try {
+		try {
+/*
+			FileWriter fw_writer = new FileWriter( outputDirectory+"/fw.fastq",true);
+			BufferedWriter fw_buffer = new BufferedWriter(fw_writer);
+			PrintWriter out = new PrintWriter(fw_buffer);*/
+
+			RandomAccessFile print_stream_fw_reads = new RandomAccessFile(outputDirectory + "/fw.fastq", "rw");
+			FileChannel channel_1 = print_stream_fw_reads.getChannel();
+			channel_1.position(channel_1.size());
+
+			StringBuilder fileContent = new StringBuilder();
 
 
-					RandomAccessFile print_stream_fw_reads = new RandomAccessFile(outputDirectory + "/fw.fastq", "rw");
-					FileChannel channel_1 = print_stream_fw_reads.getChannel();
-					StringBuilder fileContent = new StringBuilder();
+//			for (Map.Entry<Integer, String> m : fw_reads.entrySet()) {
+
+			fileContent.append("@");
+			fileContent.append(read_id + "\n");
+			fileContent.append(fw_sequence + "\n");
+			fileContent.append("+" + read_id + "\n");
+			for (int i = 0; i < fw_sequence.length(); i++) {
+				fileContent.append("I");
+			}
+			fileContent.append("\n");
+//			}
 
 
-					for (Map.Entry<Integer, String> m : fw_reads.entrySet()) {
-
-						fileContent.append("@");
-						fileContent.append(Integer.valueOf(m.getKey()) + "\n");
-						fileContent.append(m.getValue() + "\n");
-						fileContent.append("+" + Integer.valueOf(m.getKey()) + "\n");
-						for (int i = 0; i < m.getValue().length(); i++) {
-							fileContent.append("I");
-						}
-						fileContent.append("\n");
-
-					}
+			byte[] strBytes = fileContent.toString().getBytes();
+			ByteBuffer buffy = ByteBuffer.allocate(strBytes.length);
+			buffy.put(strBytes);
+			buffy.flip();
+			channel_1.write(buffy);
+			print_stream_fw_reads.close();
+			channel_1.close();
 
 
-					byte[] strBytes = fileContent.toString().getBytes();
-					ByteBuffer buffy = ByteBuffer.allocate(strBytes.length);
-					buffy.put(strBytes);
-					buffy.flip();
-					channel_1.write(buffy);
-					print_stream_fw_reads.close();
-					channel_1.close();
-
-
-				} catch (IOException e) {
-					throw new TesException("Could not Read inputFile_fidx", e);
-				}
+		} catch (IOException e) {
+			throw new TesException("Could not Read inputFile_fidx", e);
+		}
 		/*	}
 		}).start();
 
 		new Thread(new Runnable() {
 			public void run() {*/
-				try {
 
 
-					RandomAccessFile print_stream_rw_reads = new RandomAccessFile(outputDirectory + "/rw.fastq", "rw");
-					FileChannel channel_2 = print_stream_rw_reads.getChannel();
-					StringBuilder fileContent = new StringBuilder();
+		try {
 
 
-					for (Map.Entry<Integer, String> m : rw_reads.entrySet()) {
-
-						fileContent.append("@");
-						fileContent.append(Integer.valueOf(m.getKey()) + "\n");
-						fileContent.append(m.getValue() + "\n");
-						fileContent.append("+" + Integer.valueOf(m.getKey()) + "\n");
-						for (int i = 0; i < m.getValue().length(); i++) {
-							fileContent.append("I");
-						}
-						fileContent.append("\n");
-					}
+			RandomAccessFile print_stream_rw_reads = new RandomAccessFile(outputDirectory + "/rw.fastq", "rw");
+			FileChannel channel_2 = print_stream_rw_reads.getChannel();
+			channel_2.position(channel_2.size());
+			StringBuilder fileContent = new StringBuilder();
 
 
-					byte[] strBytes = fileContent.toString().getBytes();
-					ByteBuffer buffy = ByteBuffer.allocate(strBytes.length);
-					buffy.put(strBytes);
-					buffy.flip();
-					channel_2.write(buffy);
-					print_stream_rw_reads.close();
-					channel_2.close();
+//			for (Map.Entry<Integer, String> m : rw_reads.entrySet()) {
+
+			fileContent.append("@");
+			fileContent.append(read_id + "\n");
+			fileContent.append(rw_sequence + "\n");
+			fileContent.append("+" + read_id + "\n");
+			for (int i = 0; i < rw_sequence.length(); i++) {
+				fileContent.append("I");
+			}
+			fileContent.append("\n");
+//			}
 
 
-				} catch (IOException e) {
-					throw new TesException("Could not Read inputFile_fidx", e);
-				}
+			byte[] strBytes = fileContent.toString().getBytes();
+			ByteBuffer buffy = ByteBuffer.allocate(strBytes.length);
+			buffy.put(strBytes);
+			buffy.flip();
+			channel_2.write(buffy);
+			print_stream_rw_reads.close();
+			channel_2.close();
+
+
+		} catch (IOException e) {
+			throw new TesException("Could not Read inputFile_fidx", e);
+		}
 	/*		}
 		}).start();
 
 		new Thread(new Runnable() {
 			public void run() {*/
-				try {
+		try {
 
 
-					RandomAccessFile print_stream_read_mappinfo = new RandomAccessFile(outputDirectory + "/read.mappinginfo", "rw");
-					FileChannel channel_3 = print_stream_read_mappinfo.getChannel();
-					StringBuilder fileContent = new StringBuilder();
-					fileContent.append(printHeaders());
+			RandomAccessFile print_stream_read_mappinfo = new RandomAccessFile(outputDirectory + "/read.mappinginfo", "rw");
+			FileChannel channel_3 = print_stream_read_mappinfo.getChannel();
+			channel_3.position(channel_3.size());
+			StringBuilder fileContent = new StringBuilder();
 
-					read_mappinginfo.forEach((readid, line) -> {
-						fileContent.append(line);
-					});
+/*
+			read_mappinginfo.forEach((readid, line) -> {
+				fileContent.append(line);
+			});*/
 
-
-					byte[] strBytes = fileContent.toString().getBytes();
-					ByteBuffer buffy = ByteBuffer.allocate(strBytes.length);
-					buffy.put(strBytes);
-					buffy.flip();
-					channel_3.write(buffy);
-					print_stream_read_mappinfo.close();
-					channel_3.close();
+			fileContent.append(read_mappinginfo);
 
 
-				} catch (IOException e) {
-					throw new TesException("Could not Read inputFile_fidx", e);
-				}
+			byte[] strBytes = fileContent.toString().getBytes();
+			ByteBuffer buffy = ByteBuffer.allocate(strBytes.length);
+			buffy.put(strBytes);
+			buffy.flip();
+			channel_3.write(buffy);
+			print_stream_read_mappinfo.close();
+			channel_3.close();
+
+
+		} catch (IOException e) {
+			throw new TesException("Could not Read inputFile_fidx", e);
+		}
 		/*	}
 		}).start();
 */

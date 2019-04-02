@@ -37,7 +37,7 @@ public final class CommandLine_Parser {
                     break;
                 case "-o":
                     outputFile = args[i + 1];
-//                    System.out.println(outputFile);
+                    System.out.println(outputFile);
                     i++;
                     break;
                 case "-od":
