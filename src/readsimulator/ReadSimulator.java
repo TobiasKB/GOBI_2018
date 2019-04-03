@@ -622,7 +622,7 @@ public class ReadSimulator implements Runnable {
 			channel_3.position(channel_3.size());
 			StringBuilder fileContent = new StringBuilder();
 
-			fileContent.append("readid\tchr\tgene\ttranscript\tt_fw_regvec\tt_rw_regcev\tfw_regvec\trw_regveg\tfw_mut\trw_mut\n");
+			fileContent.append("readid\tchr_id\tgene_id\ttranscript_id\tt_fw_regvec\tt_rw_regvec\tfw_regvec\trw_regvec\tfw_mut\trw_mut\n");
 
 			byte[] strBytes = fileContent.toString().getBytes();
 			ByteBuffer buffy = ByteBuffer.allocate(strBytes.length);
