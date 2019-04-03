@@ -398,28 +398,29 @@ public class ReadSimulator implements Runnable {
 						rudi.append(mutated_seq_rw[1] + "\t");
 						rudi.append("\n");
 
-/*
 
-					System.out.println("Readlength: " + readlength);
+			/*		System.out.println("Readlength: " + readlength);
 					System.out.println("Transcript_id: " + t.getTrans_id());
 					System.out.println("Sequence Length: " + t.get_Sequence().length());
 					System.out.println("Transcript Length: " + t.get_length());
 					System.out.println("RandomPos: " + random_pos);
 					System.out.println("fragment_length: " + fragmen_length);
-					System.out.println("Sequence: \n" + sequence);
-					System.out.println("forward read:\n" + fw);
-					System.out.println("forward read: Mutated \n" + mutated_seq_fw[0]);
-					System.out.println("backward read:\n" + rw);
-					System.out.println("backward read: Mutated \n" + mutated_seq_rw[0]);
-					System.out.println();
+						System.out.println("Number of Exons in this transcript: "+t.getExons().size());
+//					System.out.println("Sequence: \n" + t.get_Sequence());
+//					System.out.println("forward read:\n" + fw);
+//					System.out.println("forward read: Mutated \n" + mutated_seq_fw[0]);
+//					System.out.println("backward read:\n" + rw);
+//					System.out.println("backward read: Mutated \n" + mutated_seq_rw[0]);
+//					System.out.println();
 					System.out.println("read_id " + read_id);
-					System.out.println("fw_mutations_pointer: " + fw_mutations_pointer.get(read_id));
-					System.out.println("rw_mutations_pointer: " + rw_mutations_pointer.get(read_id));
+					System.out.println("fw_mutations_pointer: " + mutated_seq_fw[1]);
+					System.out.println("rw_mutations_pointer: " + mutated_seq_rw[1]);
 					System.out.println("fw_regvec: " + fw_regvec);
 					System.out.println("rw_regvec: " + rw_regvec);
 					System.out.println();
 */
-//					System.out.println(mutated_seq_fw[0]);
+
+						//					System.out.println(mutated_seq_fw[0]);
 //						print(read_id, rudi.toString(), mutated_seq_fw[0], mutated_seq_fw[0]);
 
 
@@ -758,16 +759,47 @@ public class ReadSimulator implements Runnable {
 		return komp.toString();
 	}
 
-	private String printHeaders() {
+	private void printHeaders() {
 		/*
 		 * To read.mappinginfo:
 		 * */
-		return "readid\tchr\tgene\ttranscript\tt_fw_regvec\tt_rw_regcev\tfw_regvec\trw_regveg\tfw_mut\trw_mut\n";
+//		return "readid\tchr\tgene\ttranscript\tt_fw_regvec\tt_rw_regcev\tfw_regvec\trw_regveg\tfw_mut\trw_mut\n";
 //		TODO: Print in read.mappinginfo
 
 		/*
 		 * to rw und fw Fasta: extra ausgabe. siehe print()
 		 * */
+
+		try {
+
+
+			RandomAccessFile print_stream_read_mappinfo = new RandomAccessFile(outputDirectory + "/read.mappinginfo", "rw");
+			FileChannel channel_3 = print_stream_read_mappinfo.getChannel();
+			channel_3.position(channel_3.size());
+			StringBuilder fileContent = new StringBuilder();
+
+/*
+			read_mappinginfo.forEach((readid, line) -> {
+				fileContent.append(line);
+			});*/
+
+			fileContent.append("readid\tchr\tgene\ttranscript\tt_fw_regvec\tt_rw_regcev\tfw_regvec\trw_regveg\tfw_mut\trw_mut\n");
+
+
+			byte[] strBytes = fileContent.toString().getBytes();
+			ByteBuffer buffy = ByteBuffer.allocate(strBytes.length);
+			buffy.put(strBytes);
+			buffy.flip();
+			channel_3.write(buffy);
+			print_stream_read_mappinfo.close();
+			channel_3.close();
+
+
+		} catch (IOException e) {
+			throw new TesException("Could not Read inputFile_fidx", e);
+		}
+
+
 
 	}
 
