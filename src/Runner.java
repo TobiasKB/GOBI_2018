@@ -1,6 +1,11 @@
 import readsimulator.ReadSimulator;
 import utils.CommandLine_Parser;
 
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+
+import static utils.CommandLine_Parser.outputFile;
+
 /**
  * @author TKB
  */
@@ -8,13 +13,12 @@ public class Runner {
 
 	public static void main(String[] args) {
 		CommandLine_Parser.parseParameters(args);
-/*
 		try {
 			PrintStream fileout = new PrintStream(outputFile);
-//			System.setOut(fileout);
+			System.setOut(fileout);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
-		}*/
+		}
 //		Thread t = new Thread(new Exon_Skipping_v2());
 		Thread t = new Thread(new ReadSimulator());
 		t.start();

@@ -91,21 +91,26 @@ public class Transcript {
 	}
 
 
-	public String get_Chromosomal_location(int local_start, int local_stop) {
+	public String get_Strand() {
+		return this.strand;
+	}
 
+	public String get_Chromosomal_location(int local_start, int local_stop) {
+//		System.out.println("Berechne Chromosomale Location");
 
 		int[] koordinate = new int[2];
 		StringBuilder koordinates = new StringBuilder();
 		for (Exon ex : exons) {
-			/*System.out.println(exons);
+		/*	System.out.println("Transcript_id: "+trans_id);
+			System.out.println(exons);
 			System.out.println(ex.get_ID());
 			System.out.println(ex);
 			System.out.println("localstart:" + local_start);
 			System.out.println("local stop:" + local_stop);
-			System.out.println(exon_to_lokalMap.get(ex.get_ID())[0]);
-			System.out.println(exon_to_lokalMap.get(ex.get_ID())[1]);
-			System.out.println();*/
-
+			System.out.println("Current Exon Start: "+exon_to_lokalMap.get(ex.get_ID())[0]);
+			System.out.println("Current Exon Stop: "+exon_to_lokalMap.get(ex.get_ID())[1]);
+			System.out.println();
+*/
 
 //			Ende des Exons bereits vor Start
 			if (exon_to_lokalMap.get(ex.get_ID())[1] < local_start) {
@@ -113,7 +118,8 @@ public class Transcript {
 			}
 //			Ende lokal bereits vor Exon Anfang
 			if (exon_to_lokalMap.get(ex.get_ID())[0] > local_stop) {
-				return koordinates.toString();
+//				return koordinates.toString();
+				continue;
 			}
 
 

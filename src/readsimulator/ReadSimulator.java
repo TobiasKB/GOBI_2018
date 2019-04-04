@@ -178,16 +178,16 @@ public class ReadSimulator implements Runnable {
 
 //							if (cleanline[5].equals(gene_id) && cleanline[7].equals(transcript_id)) {
 
-								if (!target_genes.containsKey(cleanline[5])) {
+					if (!target_genes.containsKey(cleanline[5])) {
 
-									target_genes.put(cleanline[5], new Gen(cleanline[5], cleanline[4], cleanline[0], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[3], cleanline[6]));
+						target_genes.put(cleanline[5], new Gen(cleanline[5], cleanline[4], cleanline[0], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[3], cleanline[6]));
 
-								}
-								if (!target_genes.get(cleanline[5]).get_Transcripts().containsKey(cleanline[7]))
-									target_genes.get(cleanline[5]).add_Transcript(new Transcript(cleanline[7], cleanline[3], cleanline[6], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[5]));
+					}
+					if (!target_genes.get(cleanline[5]).get_Transcripts().containsKey(cleanline[7]))
+						target_genes.get(cleanline[5]).add_Transcript(new Transcript(cleanline[7], cleanline[3], cleanline[6], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[5]));
 
-								target_genes.get(cleanline[5]).add_Region(cleanline[7], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[8]);
-								target_genes.get(cleanline[5]).add_nprots();
+					target_genes.get(cleanline[5]).add_Region(cleanline[7], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[8]);
+					target_genes.get(cleanline[5]).add_nprots();
 //							}
 //						}
 //					}
@@ -255,21 +255,27 @@ public class ReadSimulator implements Runnable {
 
 			for (Gen gen : target_genes.values()) {
 
-				if (!readcounts.containsKey(gen)) {
+				if (!readcounts.containsKey(gen.getID())) {
 
 					continue;
 
 				}
-				String fw, rw, sequence, fw_regvec, rw_regvec;
+				String fw, rw, sequence, fragment, fw_regvec, rw_regvec;
 				int fragmen_length, random_pos;
 				String[] mutated_seq_fw;
 				String[] mutated_seq_rw;
 				int[] t_fw_regveg = new int[2];
 				int[] t_rw_regveg = new int[2];
 				for (Transcript t : gen.get_Transcripts().values()) {
+					if (!readcounts.get(gen.getID()).containsKey(t.getTrans_id())) {
+						continue;
+
+					}
+
 					StringBuilder stringBuilder = new StringBuilder();
 					String chr = gen.getchr();
 					long[] fasta_annotation_array = fasta_annotation.get(chr);
+//					TODO: Sequenz stimmt nicht.
 
 					t.getExons().forEach(exon -> {
 
@@ -308,7 +314,6 @@ public class ReadSimulator implements Runnable {
 
 
 							byte[] bytey = new byte[length];
-//ERROR : TODO: Falsche Laenge der Sequenz, Sequenz laenger als Transcript (Exons)
 
 							raf.readFully(bytey, 0, length);
 							String temp = new String(bytey, StandardCharsets.UTF_8).replaceAll("\n", "");
@@ -319,9 +324,13 @@ public class ReadSimulator implements Runnable {
 						}
 					});
 
-					t.add_Sequence(stringBuilder.toString());
+					sequence = stringBuilder.toString();
 
+					if (t.get_Strand().equals("-")) {
+						sequence = reverse_komplement_calc(sequence);
+					}
 
+					t.add_Sequence(sequence);
 
 					for (int i = readcounts.get(gen.getID()).get(t.getTrans_id()) - 1; i >= 0; i--) {
 
@@ -336,11 +345,11 @@ public class ReadSimulator implements Runnable {
 						} while (fragmen_length <= readlength || fragmen_length + 1 >= t.get_Sequence().length());
 
 						random_pos = r.nextInt(t.get_Sequence().length() - fragmen_length);
-						sequence = t.get_Sequence(random_pos, fragmen_length);
+						fragment = t.get_Sequence(random_pos, fragmen_length);
 
 
-						fw = sequence.substring(0, readlength);
-						rw = reverse_komplement_calc(sequence.substring(sequence.length() - readlength, sequence.length()));
+						fw = fragment.substring(0, readlength);
+						rw = reverse_komplement_calc(fragment.substring(fragment.length() - readlength, fragment.length()));
 
 						mutated_seq_fw = mutation_generator(read_id, fw);
 						mutated_seq_rw = mutation_generator(read_id, rw);
@@ -359,25 +368,34 @@ public class ReadSimulator implements Runnable {
 						rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length);
 
 
+						if (fw_regvec.equals("") || rw_regvec.equals("")) {/*
+							System.out.println("Random Pos: "+ random_pos);
+							System.out.println("Random_pos + readlength " +(random_pos+readlength));*/
+							throw new TesException("Fehler beim regvev, gleich null");
+						}
+
+
 					/*	System.out.println("Readlength: " + readlength);
 						System.out.println("Transcript_id: " + t.getTrans_id());
+						System.out.println("read_id " + read_id);
 						System.out.println("Sequence Length: " + t.get_Sequence().length());
 						System.out.println("Transcript Length: " + t.get_length());
 						System.out.println("RandomPos: " + random_pos);
 						System.out.println("fragment_length: " + fragmen_length);
-						System.out.println("Sequence: \n" + sequence);
-						System.out.println("forward read:\n" + fw);
+						System.out.println("Sequenz of Transcript: \n" + t.get_Sequence());
+						System.out.println("fragment: \n" + fragment);
+//						System.out.println("forward read:\n" + fw);
 						System.out.println("forward read: Mutated \n" + mutated_seq_fw[0]);
-						System.out.println("backward read:\n" + rw);
+//						System.out.println("backward read:\n" + rw);
 						System.out.println("backward read: Mutated \n" + mutated_seq_rw[0]);
 						System.out.println();
-						System.out.println("read_id " + read_id);
-						System.out.println("fw_mutations_pointer: " + fw_mutations_pointer.get(read_id));
-						System.out.println("rw_mutations_pointer: " + rw_mutations_pointer.get(read_id));
+						System.out.println("fw_mutations_pointer: " + mutated_seq_fw[1]);
+						System.out.println("rw_mutations_pointer: " + mutated_seq_rw[1]);
 						System.out.println("fw_regvec: " + fw_regvec);
 						System.out.println("rw_regvec: " + rw_regvec);
 						System.out.println();
 */
+
 						//rudi causes too much Overhead. Kill rudi. You must.
 
 
@@ -462,15 +480,12 @@ public class ReadSimulator implements Runnable {
 
 
 					}
-
-
 /*
 					System.out.println();
 					System.out.println(stringBuilder.toString());
 					System.out.println();
 					System.out.println(t.get_Sequence());
 */
-
 				}
 			}
 
@@ -612,6 +627,32 @@ public class ReadSimulator implements Runnable {
 			}
 		}
 		return komp.toString();
+	}
+
+	private long[] newLine_koordinates(long start_position, long end_position, String chr) {
+
+		long[] fasta_annotation_array = fasta_annotation.get(chr);
+
+
+		long lines_in_entry = (start_position - 1) / fasta_annotation_array[2];
+		long last_line_length = start_position - (lines_in_entry * fasta_annotation_array[2]);
+		long offset = lines_in_entry * fasta_annotation_array[3] + last_line_length;
+
+		long start = fasta_annotation_array[1] + offset - 1;
+
+
+		long lines_in_1 = (int) Math.floor(end_position / fasta_annotation_array[2]);
+		long lines_in_2 = (int) Math.floor(start_position / fasta_annotation_array[2]);
+
+		long lines_for_real = lines_in_1 - lines_in_2;
+		long last_line = (end_position - start_position) - (lines_for_real * fasta_annotation_array[2]);
+		long off = lines_for_real * fasta_annotation_array[3] + last_line;
+
+		int length = Math.toIntExact(off) + 1;
+
+
+		return new long[]{start, length};
+
 	}
 
 	private void printHeaders() {

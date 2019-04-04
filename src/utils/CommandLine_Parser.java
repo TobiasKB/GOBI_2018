@@ -92,7 +92,7 @@ public final class CommandLine_Parser {
                     break check;
             }
         }
-    				outputFile   = 	outputDirectory+outputFile; 
+        outputFile = outputDirectory + outputFile;
     }
 
 
