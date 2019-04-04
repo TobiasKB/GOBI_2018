@@ -266,6 +266,8 @@ public class ReadSimulator implements Runnable {
 				String[] mutated_seq_rw;
 				int[] t_fw_regveg = new int[2];
 				int[] t_rw_regveg = new int[2];
+
+
 				for (Transcript t : gen.get_Transcripts().values()) {
 					if (!readcounts.get(gen.getID()).containsKey(t.getTrans_id())) {
 						continue;
@@ -275,21 +277,29 @@ public class ReadSimulator implements Runnable {
 					StringBuilder stringBuilder = new StringBuilder();
 					String chr = gen.getchr();
 					long[] fasta_annotation_array = fasta_annotation.get(chr);
+
 //					TODO: Sequenz stimmt nicht.
 
 					t.getExons().forEach(exon -> {
+						long[] newLine_koordinates = new long[2];
 
 						try {
 
 //							raf.seek((fasta_annotation.get(gen.getValue().getchr())[1] + (exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2])) + exon.getStart());
 							/*Calculates the correct location of the sequence and saves one sequences per transcript */
+							newLine_koordinates = newLine_koordinates(exon.getStart(), exon.getEnd(), chr);
 
+							/*
 							long lines_in_entry = (exon.getStart() - 1) / fasta_annotation_array[2];
 							long last_line_length = exon.getStart() - (lines_in_entry * fasta_annotation_array[2]);
 							long offset = lines_in_entry * fasta_annotation_array[3] + last_line_length;
 
 							raf.seek(fasta_annotation_array[1] + offset - 1);
 
+							*/
+							raf.seek(newLine_koordinates[0]);
+
+/*
 
 							long lines_in_1 = (int) Math.floor(exon.getEnd() / fasta_annotation_array[2]);
 							long lines_in_2 = (int) Math.floor(exon.getStart() / fasta_annotation_array[2]);
@@ -300,7 +310,8 @@ public class ReadSimulator implements Runnable {
 							long off = lines_for_real * fasta_annotation_array[3] + last_line;
 
 
-						/*	System.out.println(t.getTrans_id());
+						*/
+/*	System.out.println(t.getTrans_id());
 							System.out.println(t.getStart());
 							System.out.println(t.getEnd());
 							System.out.println("Exon:" + exon);
@@ -308,14 +319,16 @@ public class ReadSimulator implements Runnable {
 							System.out.println("lines in " + lines_for_real);
 							System.out.println("lastL:ine " + last_line);
 							System.out.println("off " + off);
-						*/
+						*//*
+
 							int length = Math.toIntExact(off) + 1;
 //							int length = Math.toIntExact(exon.getEnd()-exon.getStart()+1);
 
+*/
 
-							byte[] bytey = new byte[length];
+							byte[] bytey = new byte[(int) newLine_koordinates[1]];
 
-							raf.readFully(bytey, 0, length);
+							raf.readFully(bytey, 0, (int) newLine_koordinates[1]);
 							String temp = new String(bytey, StandardCharsets.UTF_8).replaceAll("\n", "");
 							stringBuilder.append(temp);
 
@@ -634,21 +647,21 @@ public class ReadSimulator implements Runnable {
 		long[] fasta_annotation_array = fasta_annotation.get(chr);
 
 
-		long lines_in_entry = (start_position - 1) / fasta_annotation_array[2];
-		long last_line_length = start_position - (lines_in_entry * fasta_annotation_array[2]);
-		long offset = lines_in_entry * fasta_annotation_array[3] + last_line_length;
+//		long lines_in_entry = ((start_position - 1) / fasta_annotation_array[2]);
+//		long last_line_length = (start_position - (((start_position - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]));
+//		long offset =( ((start_position - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (start_position - (((start_position - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2])));
 
-		long start = fasta_annotation_array[1] + offset - 1;
+		long start = fasta_annotation_array[1] + (((start_position - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (start_position - (((start_position - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]))) - 1;
 
 
 		long lines_in_1 = (int) Math.floor(end_position / fasta_annotation_array[2]);
 		long lines_in_2 = (int) Math.floor(start_position / fasta_annotation_array[2]);
 
-		long lines_for_real = lines_in_1 - lines_in_2;
-		long last_line = (end_position - start_position) - (lines_for_real * fasta_annotation_array[2]);
-		long off = lines_for_real * fasta_annotation_array[3] + last_line;
+//		long lines_for_real = (lines_in_1 - lines_in_2);
+//		long last_line = ((end_position - start_position) - ( (lines_in_1 - lines_in_2) * fasta_annotation_array[2]));
+//		long off = ((lines_in_1 - lines_in_2) * fasta_annotation_array[3] + ((end_position - start_position) - ( (lines_in_1 - lines_in_2) * fasta_annotation_array[2])));
 
-		int length = Math.toIntExact(off) + 1;
+		long length = Math.toIntExact(((lines_in_1 - lines_in_2) * fasta_annotation_array[3] + ((end_position - start_position) - ((lines_in_1 - lines_in_2) * fasta_annotation_array[2])))) + 1;
 
 
 		return new long[]{start, length};

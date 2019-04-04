@@ -128,6 +128,7 @@ public class Transcript {
 				if (exon_to_lokalMap.get(ex.get_ID())[1] >= local_stop) {
 					koordinate[0] = ex.getStart() + local_start;
 					koordinate[1] = koordinate[0] + (local_stop - local_start);
+
 					koordinates.append(koordinate[0] + "-" + koordinate[1]);
 					return koordinates.toString();
 
@@ -341,5 +342,6 @@ public class Transcript {
 	public int get_realLength() {
 		return this.real_length;
 	}
+
 
 }
