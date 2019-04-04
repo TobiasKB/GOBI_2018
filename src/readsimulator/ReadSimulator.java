@@ -184,7 +184,7 @@ public class ReadSimulator implements Runnable {
 
 					}
 					if (!target_genes.get(cleanline[5]).get_Transcripts().containsKey(cleanline[7]))
-						target_genes.get(cleanline[5]).add_Transcript(new Transcript(cleanline[7], cleanline[3], cleanline[6], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[5]));
+						target_genes.get(cleanline[5]).add_Transcript(new Transcript(cleanline[7], cleanline[3], cleanline[6], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[5], cleanline[0]));
 
 					target_genes.get(cleanline[5]).add_Region(cleanline[7], Integer.parseInt(cleanline[1]), Integer.parseInt(cleanline[2]), cleanline[8]);
 					target_genes.get(cleanline[5]).add_nprots();
@@ -377,8 +377,11 @@ public class ReadSimulator implements Runnable {
 
 						/*Auf Gene/Chromosom*/
 
-						fw_regvec = t.get_Chromosomal_location(random_pos, random_pos + readlength);
-						rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length);
+						fw_regvec = t.get_Chromosomal_location(random_pos, random_pos + readlength, fasta_annotation);
+						rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length, fasta_annotation);
+
+
+
 
 
 						if (fw_regvec.equals("") || rw_regvec.equals("")) {/*
@@ -646,23 +649,9 @@ public class ReadSimulator implements Runnable {
 
 		long[] fasta_annotation_array = fasta_annotation.get(chr);
 
-
-//		long lines_in_entry = ((start_position - 1) / fasta_annotation_array[2]);
-//		long last_line_length = (start_position - (((start_position - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]));
-//		long offset =( ((start_position - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (start_position - (((start_position - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2])));
-
 		long start = fasta_annotation_array[1] + (((start_position - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (start_position - (((start_position - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]))) - 1;
 
-
-		long lines_in_1 = (int) Math.floor(end_position / fasta_annotation_array[2]);
-		long lines_in_2 = (int) Math.floor(start_position / fasta_annotation_array[2]);
-
-//		long lines_for_real = (lines_in_1 - lines_in_2);
-//		long last_line = ((end_position - start_position) - ( (lines_in_1 - lines_in_2) * fasta_annotation_array[2]));
-//		long off = ((lines_in_1 - lines_in_2) * fasta_annotation_array[3] + ((end_position - start_position) - ( (lines_in_1 - lines_in_2) * fasta_annotation_array[2])));
-
-		long length = Math.toIntExact(((lines_in_1 - lines_in_2) * fasta_annotation_array[3] + ((end_position - start_position) - ((lines_in_1 - lines_in_2) * fasta_annotation_array[2])))) + 1;
-
+		long length = Math.toIntExact(((((int) Math.floor(end_position / fasta_annotation_array[2])) - ((int) Math.floor(start_position / fasta_annotation_array[2]))) * fasta_annotation_array[3] + ((end_position - start_position) - ((((int) Math.floor(end_position / fasta_annotation_array[2])) - ((int) Math.floor(start_position / fasta_annotation_array[2]))) * fasta_annotation_array[2])))) + 1;
 
 		return new long[]{start, length};
 

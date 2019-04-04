@@ -25,6 +25,7 @@ public class Transcript {
 	private String sequence;
 	private int length_exons;
 	private int real_length;
+	private String chr;
 
 	/*
 	 * @exon_to_localMap: Stores the Exon_id and maps it to the lokal coordinates of the exon (relative to length_exons)
@@ -33,9 +34,10 @@ public class Transcript {
 	//TODO: Transcript length != sequence length!! --> get sequence length for now ?
 
 
-	public Transcript(String trans_id, String strand, String proteinID, int start, int end, String source) {
+	public Transcript(String trans_id, String strand, String proteinID, int start, int end, String source, String chr) {
 		this.trans_id = trans_id;
 		this.strand = strand;
+		this.chr = chr;
 		exons = new TreeSet<>();
 		introns = new TreeSet<Intron>();
 		this.start = start;
@@ -95,11 +97,21 @@ public class Transcript {
 		return this.strand;
 	}
 
-	public String get_Chromosomal_location(int local_start, int local_stop) {
+	public String get_Chromosomal_location(int local_start, int local_stop, HashMap<String, long[]> fasta_annotation) {
 //		System.out.println("Berechne Chromosomale Location");
 
 		int[] koordinate = new int[2];
 		StringBuilder koordinates = new StringBuilder();
+
+//		long[] fasta_annotation_array = fasta_annotation.get(this.chr);
+
+
+
+
+
+
+
+
 		for (Exon ex : exons) {
 		/*	System.out.println("Transcript_id: "+trans_id);
 			System.out.println(exons);
@@ -128,14 +140,21 @@ public class Transcript {
 				if (exon_to_lokalMap.get(ex.get_ID())[1] >= local_stop) {
 					koordinate[0] = ex.getStart() + local_start;
 					koordinate[1] = koordinate[0] + (local_stop - local_start);
-
+					/*long start = fasta_annotation_array[1] + (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (koordinate[0] - (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]))) - 1;
+					long length = Math.toIntExact(((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[3] + ((koordinate[1] - koordinate[0]) - ((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[2])))) + 1;
+					long end = start+length;*/
 					koordinates.append(koordinate[0] + "-" + koordinate[1]);
+
 					return koordinates.toString();
 
 				} else {
 					koordinate[0] = ex.getStart() + local_start;
 					koordinate[1] = ex.getEnd();
 					local_start = local_start + (koordinate[1] - koordinate[0]);//schiebt local_start auf start des naechsten Exons
+					/*long start = fasta_annotation_array[1] + (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (koordinate[0] - (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]))) - 1;
+					long length = Math.toIntExact(((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[3] + ((koordinate[1] - koordinate[0]) - ((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[2])))) + 1;
+					long end = start+length;*/
+
 					koordinates.append(koordinate[0] + "-" + koordinate[1] + "|");
 				}
 
@@ -146,6 +165,9 @@ public class Transcript {
 
 					koordinate[0] = ex.getStart();
 					koordinate[1] = koordinate[0] + (local_stop - local_start);
+					/*long start = fasta_annotation_array[1] + (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (koordinate[0] - (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]))) - 1;
+					long length = Math.toIntExact(((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[3] + ((koordinate[1] - koordinate[0]) - ((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[2])))) + 1;
+					long end = start+length;*/
 					koordinates.append(koordinate[0] + "-" + koordinate[1]);
 					return koordinates.toString();
 
@@ -153,6 +175,9 @@ public class Transcript {
 
 					koordinate[0] = ex.getStart();
 					koordinate[1] = ex.getEnd();
+					/*long start = fasta_annotation_array[1] + (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (koordinate[0] - (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]))) - 1;
+					long length = Math.toIntExact(((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[3] + ((koordinate[1] - koordinate[0]) - ((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[2])))) + 1;
+					long end = start+length;*/
 					koordinates.append(koordinate[0] + "-" + koordinate[1]);
 					return koordinates.toString();
 
@@ -161,6 +186,9 @@ public class Transcript {
 					koordinate[0] = ex.getStart();
 					koordinate[1] = koordinate[0] + (local_stop - local_start);
 					local_start = local_start + (koordinate[1] - koordinate[0]);
+					/*long start = fasta_annotation_array[1] + (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (koordinate[0] - (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]))) - 1;
+					long length = Math.toIntExact(((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[3] + ((koordinate[1] - koordinate[0]) - ((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[2])))) + 1;
+					long end = start+length;*/
 					koordinates.append(koordinate[0] + "-" + koordinate[1] + "|");
 				}
 
@@ -171,6 +199,7 @@ public class Transcript {
 		}
 		return "WRONG WRONG WRONG WRONG";
 	}
+
 
 	public void calculate_Introns() {
 		Region temp = null;

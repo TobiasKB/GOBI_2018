@@ -65,7 +65,7 @@ public class Exon_Skipping_v2 implements Runnable {
                     }
 
                     if (!genes.get(cleanLine[5]).get_Transcripts().containsKey(cleanLine[7]))
-                        genes.get(cleanLine[5]).add_Transcript(new Transcript(cleanLine[7], cleanLine[3], cleanLine[6], Integer.parseInt(cleanLine[1]), Integer.parseInt(cleanLine[2]), cleanLine[5]));
+	                    genes.get(cleanLine[5]).add_Transcript(new Transcript(cleanLine[7], cleanLine[3], cleanLine[6], Integer.parseInt(cleanLine[1]), Integer.parseInt(cleanLine[2]), cleanLine[5], cleanLine[0]));
 
 
                     genes.get(cleanLine[5]).add_Region(cleanLine[7], Integer.parseInt(cleanLine[1]), Integer.parseInt(cleanLine[2]), cleanLine[8]);
