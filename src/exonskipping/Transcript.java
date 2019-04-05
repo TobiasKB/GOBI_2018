@@ -36,6 +36,7 @@ public class Transcript {
 
 	public Transcript(String trans_id, String strand, String proteinID, int start, int end, String source, String chr) {
 		this.trans_id = trans_id;
+//		System.out.println("erschaffe Transkript mit id: "+trans_id);
 		this.strand = strand;
 		this.chr = chr;
 		exons = new TreeSet<>();
@@ -52,6 +53,7 @@ public class Transcript {
 		this.length_exons = 1;
 		this.real_length = 0;
 		this.exon_to_lokalMap = new HashMap<String, int[]>();
+
 	}
 
 	public void add_Sequence(String sequence) {
@@ -79,16 +81,27 @@ public class Transcript {
 		if (stop > this.end) {
 			this.end = stop;
 		}
-		exon_to_lokalMap.put(identifier, new int[]{this.length_exons, length_exons + (stop - start) + 1});
+//		System.out.println(trans_id+" neues Exon: "+start+":"+stop);
+//		exon_to_lokalMap.put(identifier, new int[]{this.length_exons, length_exons + (stop - start) + 1});
 		/*System.out.println(this.length_exons);
 		System.out.println(stop-start);
 
 
 		*/
+		exon_to_local_sort();
 
-
-		this.length_exons = +this.length_exons + stop - start + 1;
+//		this.length_exons = +this.length_exons + stop - start + 1;
 		this.real_length = this.end - this.start;
+
+	}
+
+	private void exon_to_local_sort() {
+		this.length_exons = 0;
+		for (Exon ex : exons) {
+
+			exon_to_lokalMap.put(ex.get_ID(), new int[]{this.length_exons, length_exons + (ex.getEnd() - ex.getStart()) + 1});
+			this.length_exons = this.length_exons + ex.getEnd() - ex.getStart() + 1;
+		}
 
 	}
 
@@ -103,17 +116,10 @@ public class Transcript {
 		int[] koordinate = new int[2];
 		StringBuilder koordinates = new StringBuilder();
 
-//		long[] fasta_annotation_array = fasta_annotation.get(this.chr);
-
-
-
-
-
-
-
+		long[] fasta_annotation_array = fasta_annotation.get(this.chr);
 
 		for (Exon ex : exons) {
-		/*	System.out.println("Transcript_id: "+trans_id);
+			System.out.println("Transcript_id: " + trans_id);
 			System.out.println(exons);
 			System.out.println(ex.get_ID());
 			System.out.println(ex);
@@ -121,9 +127,8 @@ public class Transcript {
 			System.out.println("local stop:" + local_stop);
 			System.out.println("Current Exon Start: "+exon_to_lokalMap.get(ex.get_ID())[0]);
 			System.out.println("Current Exon Stop: "+exon_to_lokalMap.get(ex.get_ID())[1]);
-			System.out.println();
-*/
-
+			System.out.println("Exon Genomic Start: " + ex.getStart());
+			System.out.println("Exon Genomic Stopp: " + ex.getEnd());
 //			Ende des Exons bereits vor Start
 			if (exon_to_lokalMap.get(ex.get_ID())[1] < local_start) {
 				continue;
@@ -138,24 +143,26 @@ public class Transcript {
 			if (exon_to_lokalMap.get(ex.get_ID())[0] < local_start) {
 
 				if (exon_to_lokalMap.get(ex.get_ID())[1] >= local_stop) {
-					koordinate[0] = ex.getStart() + local_start;
+					koordinate[0] = ex.getStart() + (local_start - exon_to_lokalMap.get(ex.get_ID())[0]);
 					koordinate[1] = koordinate[0] + (local_stop - local_start);
 					/*long start = fasta_annotation_array[1] + (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (koordinate[0] - (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]))) - 1;
 					long length = Math.toIntExact(((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[3] + ((koordinate[1] - koordinate[0]) - ((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[2])))) + 1;
 					long end = start+length;*/
 					koordinates.append(koordinate[0] + "-" + koordinate[1]);
-
+//					koordinates.append(start + "-" + end);
+//					System.out.println(koordinates.toString());
 					return koordinates.toString();
 
 				} else {
-					koordinate[0] = ex.getStart() + local_start;
+					koordinate[0] = ex.getEnd() - ((exon_to_lokalMap.get(ex.get_ID())[1]) - local_start);
 					koordinate[1] = ex.getEnd();
 					local_start = local_start + (koordinate[1] - koordinate[0]);//schiebt local_start auf start des naechsten Exons
 					/*long start = fasta_annotation_array[1] + (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (koordinate[0] - (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]))) - 1;
 					long length = Math.toIntExact(((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[3] + ((koordinate[1] - koordinate[0]) - ((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[2])))) + 1;
-					long end = start+length;*/
-
+					long end = start+length;
+*/
 					koordinates.append(koordinate[0] + "-" + koordinate[1] + "|");
+//					koordinates.append(start + "-" + end + "|");
 				}
 
 
@@ -169,16 +176,20 @@ public class Transcript {
 					long length = Math.toIntExact(((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[3] + ((koordinate[1] - koordinate[0]) - ((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[2])))) + 1;
 					long end = start+length;*/
 					koordinates.append(koordinate[0] + "-" + koordinate[1]);
+//					koordinates.append(start + "-" + end);
+//					System.out.println(koordinates.toString());
 					return koordinates.toString();
 
 				} else if (exon_to_lokalMap.get(ex.get_ID())[1] == local_stop) {
 
 					koordinate[0] = ex.getStart();
-					koordinate[1] = ex.getEnd();
-					/*long start = fasta_annotation_array[1] + (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (koordinate[0] - (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]))) - 1;
+					koordinate[1] = ex.getEnd();/*
+					long start = fasta_annotation_array[1] + (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[3] + (koordinate[0] - (((koordinate[0] - 1) / fasta_annotation_array[2]) * fasta_annotation_array[2]))) - 1;
 					long length = Math.toIntExact(((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[3] + ((koordinate[1] - koordinate[0]) - ((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[2])))) + 1;
 					long end = start+length;*/
 					koordinates.append(koordinate[0] + "-" + koordinate[1]);
+//					koordinates.append(start + "-" + end);
+//					System.out.println(koordinates.toString());
 					return koordinates.toString();
 
 
@@ -190,6 +201,7 @@ public class Transcript {
 					long length = Math.toIntExact(((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[3] + ((koordinate[1] - koordinate[0]) - ((( (int) Math.floor(koordinate[1] / fasta_annotation_array[2])) - ((int) Math.floor(koordinate[0] / fasta_annotation_array[2]))) * fasta_annotation_array[2])))) + 1;
 					long end = start+length;*/
 					koordinates.append(koordinate[0] + "-" + koordinate[1] + "|");
+//					koordinates.append(start + "-" + end + "|");
 				}
 
 

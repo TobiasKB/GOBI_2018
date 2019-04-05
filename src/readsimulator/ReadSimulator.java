@@ -391,9 +391,11 @@ public class ReadSimulator implements Runnable {
 						}
 
 
-					/*	System.out.println("Readlength: " + readlength);
+/*
 						System.out.println("Transcript_id: " + t.getTrans_id());
-						System.out.println("read_id " + read_id);
+						System.out.println("Readlength: " + readlength);
+						System.out.println();
+//						System.out.println("read_id " + read_id);
 						System.out.println("Sequence Length: " + t.get_Sequence().length());
 						System.out.println("Transcript Length: " + t.get_length());
 						System.out.println("RandomPos: " + random_pos);
