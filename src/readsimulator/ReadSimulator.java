@@ -269,6 +269,7 @@ public class ReadSimulator implements Runnable {
 
 
 				for (Transcript t : gen.get_Transcripts().values()) {
+
 					if (!readcounts.get(gen.getID()).containsKey(t.getTrans_id())) {
 						continue;
 
@@ -278,7 +279,6 @@ public class ReadSimulator implements Runnable {
 					String chr = gen.getchr();
 					long[] fasta_annotation_array = fasta_annotation.get(chr);
 
-//					TODO: Sequenz stimmt nicht.
 
 					t.getExons().forEach(exon -> {
 						long[] newLine_koordinates = new long[2];
@@ -287,44 +287,11 @@ public class ReadSimulator implements Runnable {
 
 //							raf.seek((fasta_annotation.get(gen.getValue().getchr())[1] + (exon.getStart() / fasta_annotation.get(gen.getValue().getchr())[2])) + exon.getStart());
 							/*Calculates the correct location of the sequence and saves one sequences per transcript */
+
 							newLine_koordinates = newLine_koordinates(exon.getStart(), exon.getEnd(), chr);
 
-							/*
-							long lines_in_entry = (exon.getStart() - 1) / fasta_annotation_array[2];
-							long last_line_length = exon.getStart() - (lines_in_entry * fasta_annotation_array[2]);
-							long offset = lines_in_entry * fasta_annotation_array[3] + last_line_length;
-
-							raf.seek(fasta_annotation_array[1] + offset - 1);
-
-							*/
 							raf.seek(newLine_koordinates[0]);
 
-/*
-
-							long lines_in_1 = (int) Math.floor(exon.getEnd() / fasta_annotation_array[2]);
-							long lines_in_2 = (int) Math.floor(exon.getStart() / fasta_annotation_array[2]);
-
-							long lines_for_real = lines_in_1 - lines_in_2;
-
-							long last_line = (exon.getEnd() - exon.getStart()) - (lines_for_real * fasta_annotation_array[2]);
-							long off = lines_for_real * fasta_annotation_array[3] + last_line;
-
-
-						*/
-/*	System.out.println(t.getTrans_id());
-							System.out.println(t.getStart());
-							System.out.println(t.getEnd());
-							System.out.println("Exon:" + exon);
-							System.out.println(fasta_annotation.get(gen.getValue().getchr())[1] + offset - 1);
-							System.out.println("lines in " + lines_for_real);
-							System.out.println("lastL:ine " + last_line);
-							System.out.println("off " + off);
-						*//*
-
-							int length = Math.toIntExact(off) + 1;
-//							int length = Math.toIntExact(exon.getEnd()-exon.getStart()+1);
-
-*/
 
 							byte[] bytey = new byte[(int) newLine_koordinates[1]];
 
@@ -381,18 +348,19 @@ public class ReadSimulator implements Runnable {
 						rw_regvec = t.get_Chromosomal_location(random_pos + fragmen_length - readlength, random_pos + fragmen_length, fasta_annotation);
 
 
-
-
-
-						if (fw_regvec.equals("") || rw_regvec.equals("")) {/*
-							System.out.println("Random Pos: "+ random_pos);
-							System.out.println("Random_pos + readlength " +(random_pos+readlength));*/
+						if (fw_regvec.equals("") || rw_regvec.equals("")) {
 							throw new TesException("Fehler beim regvev, gleich null");
 						}
-
-
 /*
-						System.out.println("Transcript_id: " + t.getTrans_id());
+
+
+						System.out.println("Transcript_id: " + t.getTrans_id()+"\t Transcript Strand: "+t.get_Strand());
+						System.out.println("Transcript Exons: "+t.getExons());
+						System.out.println("Sequenz of Transcript: \n" + t.get_Sequence());
+						t.get_exon_to_local().forEach((exonid, startstop)->
+										System.out.println(exonid+"\t"+startstop[0]+":"+startstop[1])
+								);
+
 						System.out.println("Readlength: " + readlength);
 						System.out.println();
 //						System.out.println("read_id " + read_id);
@@ -400,7 +368,6 @@ public class ReadSimulator implements Runnable {
 						System.out.println("Transcript Length: " + t.get_length());
 						System.out.println("RandomPos: " + random_pos);
 						System.out.println("fragment_length: " + fragmen_length);
-						System.out.println("Sequenz of Transcript: \n" + t.get_Sequence());
 						System.out.println("fragment: \n" + fragment);
 //						System.out.println("forward read:\n" + fw);
 						System.out.println("forward read: Mutated \n" + mutated_seq_fw[0]);
@@ -416,10 +383,6 @@ public class ReadSimulator implements Runnable {
 
 						//rudi causes too much Overhead. Kill rudi. You must.
 
-
-				/*	String result_line = read_id + "\t" + gen.getValue().getchr() +
-							"\t" + gen.getKey() + "\t" + t.getTrans_id() + "\t" + t_fw_regveg[0] + "-" + t_fw_regveg[1] +
-							"\t" + t_rw_regveg[0] + "-" + t_rw_regveg[1] + "\t" + mutated_seq_fw[1] + "\t" + mutated_seq_rw[1] + "\n";*/
 						rudi.append(read_id + "\t");
 						rudi.append(gen.getchr() + "\t");
 						rudi.append(gen.getID() + "\t");
@@ -498,13 +461,8 @@ public class ReadSimulator implements Runnable {
 
 
 					}
-/*
-					System.out.println();
-					System.out.println(stringBuilder.toString());
-					System.out.println();
-					System.out.println(t.get_Sequence());
-*/
 				}
+
 			}
 
 

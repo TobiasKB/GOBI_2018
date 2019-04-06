@@ -30,8 +30,7 @@ public class Transcript {
 	/*
 	 * @exon_to_localMap: Stores the Exon_id and maps it to the lokal coordinates of the exon (relative to length_exons)
 	 * */
-	private HashMap<String, int[]> exon_to_lokalMap;
-	//TODO: Transcript length != sequence length!! --> get sequence length for now ?
+	private LinkedHashMap<String, int[]> exon_to_lokalMap;
 
 
 	public Transcript(String trans_id, String strand, String proteinID, int start, int end, String source, String chr) {
@@ -39,6 +38,10 @@ public class Transcript {
 //		System.out.println("erschaffe Transkript mit id: "+trans_id);
 		this.strand = strand;
 		this.chr = chr;
+		/*if(strand.equals("-")){
+			exons = new TreeSet<>(Collections.reverseOrder());
+		}else{
+		}*/
 		exons = new TreeSet<>();
 		introns = new TreeSet<Intron>();
 		this.start = start;
@@ -52,8 +55,13 @@ public class Transcript {
 		this.source = source;
 		this.length_exons = 1;
 		this.real_length = 0;
-		this.exon_to_lokalMap = new HashMap<String, int[]>();
+		this.exon_to_lokalMap = new LinkedHashMap<String, int[]>();
 
+	}
+
+
+	public LinkedHashMap<String, int[]> get_exon_to_local() {
+		return this.exon_to_lokalMap;
 	}
 
 	public void add_Sequence(String sequence) {
@@ -96,13 +104,22 @@ public class Transcript {
 	}
 
 	private void exon_to_local_sort() {
+
 		this.length_exons = 0;
 		for (Exon ex : exons) {
-
 			exon_to_lokalMap.put(ex.get_ID(), new int[]{this.length_exons, length_exons + (ex.getEnd() - ex.getStart()) + 1});
 			this.length_exons = this.length_exons + ex.getEnd() - ex.getStart() + 1;
 		}
 
+		int exTemplength = this.length_exons;
+		if (this.strand.equals("-")) {
+			for (Exon ex : exons) {
+
+				exon_to_lokalMap.put(ex.get_ID(), new int[]{exTemplength - (ex.getEnd() - ex.getStart()) - 1, exTemplength});
+				exTemplength = exTemplength - (ex.getEnd() - ex.getStart()) - 1;
+
+			}
+		}
 	}
 
 
@@ -111,7 +128,7 @@ public class Transcript {
 	}
 
 	public String get_Chromosomal_location(int local_start, int local_stop, HashMap<String, long[]> fasta_annotation) {
-//		System.out.println("Berechne Chromosomale Location");
+		System.out.println("Berechne Chromosomale Location");
 
 		int[] koordinate = new int[2];
 		StringBuilder koordinates = new StringBuilder();
@@ -119,7 +136,7 @@ public class Transcript {
 		long[] fasta_annotation_array = fasta_annotation.get(this.chr);
 
 		for (Exon ex : exons) {
-			System.out.println("Transcript_id: " + trans_id);
+			System.out.println("Transcript_id: " + trans_id + " Transcript Strand: " + strand);
 			System.out.println(exons);
 			System.out.println(ex.get_ID());
 			System.out.println(ex);
